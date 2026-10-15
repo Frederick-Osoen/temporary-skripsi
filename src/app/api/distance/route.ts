@@ -19,11 +19,11 @@ const TOLL_PASSES = (process.env.GOOGLE_TOLL_PASSES ?? 'ID_E_TOLL')
 
 // PLACEHOLDER: kalibrasi dengan angka riil JJ Teknik
 const FLEET = {
-  pickup: { label: 'Pickup', fuelRatePerKm: 1700, tollMultiplier: 1 },
-  // pickup: { label: 'Pickup', fuelRatePerKm: 1000, tollMultiplier: 1 },
+  // pickup: { label: 'Pickup', fuelRatePerKm: 1700, tollMultiplier: 1 },
+  pickup: { label: 'Pickup', fuelRatePerKm: 1000, tollMultiplier: 1 },
 
-  // truck: { label:'Truck', fuelRatePerKm: 975, tollMultiplier: TRUCK_TOLL_MULTIPLIER },
-  truck: { label:'Truck', fuelRatePerKm: 3750, tollMultiplier: TRUCK_TOLL_MULTIPLIER },
+  truck: { label:'Truck', fuelRatePerKm: 975, tollMultiplier: TRUCK_TOLL_MULTIPLIER },
+  // truck: { label:'Truck', fuelRatePerKm: 3750, tollMultiplier: TRUCK_TOLL_MULTIPLIER },
 } as const
 type FleetType = keyof typeof FLEET
 

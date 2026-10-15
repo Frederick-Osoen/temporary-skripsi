@@ -1,13 +1,13 @@
 export type ActionCode = 'CONFLICT' | 'UNAUTHENTICATED' | 'FORBIDDEN' | 'UNAVAILABLE'
-export type ActionResult = { ok: true } | { ok: false; error: string; code?: ActionCode }
+export type ActionFail = { ok: false; error: string; code?: ActionCode }
+export type ActionResult = { ok: true } | ActionFail
+export type ActionData<T> = { ok: true; data: T } | ActionFail
 
 // Bungkus SETIAP pemanggilan Server Action dari Client Component.
-// - sesi habis  -> arahkan ke /login (tanpa crash)
-// - respons tak terduga / jaringan -> pesan biasa (tanpa crash)
-export async function safeAction(fn: () => Promise<ActionResult>): Promise<ActionResult> {
+export async function safeAction<T extends { ok: boolean }>(fn: () => Promise<T>): Promise<T | ActionFail> {
   try {
     const res = await fn()
-    if (!res.ok && res.code === 'UNAUTHENTICATED') {
+    if (!res.ok && (res as unknown as ActionFail).code === 'UNAUTHENTICATED') {
       const next = encodeURIComponent(window.location.pathname + window.location.search)
       window.location.assign(`/login?expired=1&next=${next}`)
     }
