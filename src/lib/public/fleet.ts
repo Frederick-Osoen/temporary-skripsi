@@ -55,3 +55,11 @@ export function planFleet(lines: FleetLine[]): FleetPlan {
 
   return { pickups, trucks, gensetUnits, cargoUnits }
 }
+
+/** Teks ringkas armada untuk UI dan pesan WhatsApp, mis. "2 Pickup + 1 Truk". */
+export function fleetPlanLabel(plan: FleetPlan): string {
+  const parts: string[] = []
+  if (plan.pickups > 0) parts.push(`${plan.pickups} Pickup`)
+  if (plan.trucks > 0) parts.push(`${plan.trucks} Truk`)
+  return parts.length > 0 ? parts.join(' + ') : '-'
+}

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { createProduct, updateProduct } from '@/app/dashboard/products/actions'
 import { safeAction } from '@/lib/action-client'
 import { RupiahInput } from '@/components/ui/rupiah-input'
+import { ImageUploader } from './image-uploader'
 import type { Product } from '@/lib/validations/product'
 
 
@@ -18,6 +19,8 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
   const [price, setPrice] = useState<number | null>(product?.base_price ?? 0)
   const [error, setError] = useState<string | null>(null)
   const [overtime, setOvertime] = useState<number | null>(product?.overtime_rate ?? null)
+  const [imagePath, setImagePath] = useState<string | null>(product?.image_path ?? null)
+  const [uploading, setUploading] = useState(false)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -29,6 +32,7 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
       base_price: fd.get('base_price'),
       total_stock: fd.get('total_stock'),
       overtime_rate: fd.get('overtime_rate'),
+      image_path: imagePath,
     }
     startTransition(async () => {
       const res = await safeAction(() => (product ? updateProduct(product.id, input) : createProduct(input)))
@@ -39,6 +43,11 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Foto produk</Label>
+        <ImageUploader value={imagePath} onChange={setImagePath} onBusyChange={setUploading} />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="name">Nama produk</Label>
         <Input id="name" name="name" required defaultValue={product?.name} />
@@ -75,7 +84,7 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onDone} disabled={pending}>Batal</Button>
-        <Button type="submit" disabled={pending}>{pending ? 'Menyimpan...' : 'Simpan'}</Button>
+        <Button type="submit" disabled={pending || uploading}>{pending ? 'Menyimpan...' : 'Simpan'}</Button>
       </div>
     </form>
   )

@@ -18,6 +18,7 @@ import { buildWhatsAppDraft } from '@/lib/public/whatsapp'
 import { PlaceInput } from './place-input'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/public/cart'
+import { sendLead } from '@/lib/public/leads-client'
 
 const MAX_QTY = 99
 const MAX_DAYS = 60
@@ -218,6 +219,27 @@ export function Estimator({ products, rules, initialAdd }: { products: PublicPro
             input, result, notes,
         })
         : null
+
+    // Catat lead saat pelanggan menekan "Lanjutkan via WhatsApp" (tidak menghambat pembukaan WhatsApp)
+    function recordLead() {
+        sendLead({
+            customer_name: name.trim() || undefined,
+            total_estimate: Math.round(result.total),
+            payload: {
+                items: lines.map((l) => ({ name: l.name, qty: l.qty, category: l.category })),
+                start_date: startDate,
+                end_date: input.end_date,
+                start_time: hasGenset ? startTime : null,
+                end_time: hasGenset ? endTime : null,
+                delivery,
+                destination: delivery === 'delivery' ? destination.trim() : null,
+                fleet: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
+                distance_km: shipping.status === 'ok' ? shipping.distance_km : null,
+                shipping_pending: result.shippingPending,
+                notes,
+            },
+        })
+    }
 
     const rentalProducts = products.filter((p) => p.category === 'rental' && p.capacity_kva === null)
     const rentalGensets = products.filter((p) => p.capacity_kva !== null)
@@ -433,7 +455,7 @@ export function Estimator({ products, rules, initialAdd }: { products: PublicPro
                     )}
 
                     {draft && !timeError ? (
-                        <a href={draft.url} target="_blank" rel="noopener noreferrer" className={buttonVariants({ className: 'w-full' })}>
+                        <a href={draft.url} target="_blank" rel="noopener noreferrer" onClick={recordLead} className={buttonVariants({ className: 'w-full' })}>
                             <MessageCircle className="mr-2 h-4 w-4" /> Lanjutkan via WhatsApp
                         </a>
                     ) : (

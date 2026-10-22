@@ -10,6 +10,7 @@ import {
   Boxes,
   Wrench,
   Users,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Ringkasan', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pesanan', href: '/dashboard/orders', icon: ClipboardList },
+  { label: 'Leads', href: '/dashboard/leads', icon: Inbox },
   { label: 'Kalender', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Produk', href: '/dashboard/products', icon: Package },
   { label: 'Aset Fisik', href: '/dashboard/assets', icon: Boxes },

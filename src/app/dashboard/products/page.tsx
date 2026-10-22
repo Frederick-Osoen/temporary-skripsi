@@ -6,7 +6,7 @@ export default async function ProductsPage() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('products')
-    .select('id, name, category, base_price, total_stock')
+    .select('id, name, category, base_price, total_stock, overtime_rate, image_path')
     .order('name')
 
   if (error) {
@@ -14,11 +14,14 @@ export default async function ProductsPage() {
   }
 
   const products: Product[] = (data ?? []).map((p) => ({
-    ...p,
+    id: p.id,
+    name: p.name,
+    category: p.category,
     base_price: Number(p.base_price),
-    overtime_rate: (p as any).overtime_rate === null ? null : Number((p as any).overtime_rate),
+    total_stock: p.total_stock,
+    overtime_rate: p.overtime_rate === null ? null : Number(p.overtime_rate),
+    image_path: p.image_path ?? null,
   }))
-
 
   return (
     <div className="space-y-4">
