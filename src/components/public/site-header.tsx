@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
-import { STORE_NAME, WA_NUMBER } from '@/lib/public/config'
+import { STORE_NAME } from '@/lib/public/config'
 
 const NAV = [
   { href: '/', label: 'Beranda' },
@@ -8,8 +8,8 @@ const NAV = [
   { href: '/estimasi', label: 'Estimasi' },
 ]
 
-export function SiteHeader() {
-  const wa = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Halo ${STORE_NAME}, saya ingin bertanya.`)}`
+export function SiteHeader({ waNumber }: { waNumber: string }) {
+  const wa = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo ${STORE_NAME}, saya ingin bertanya.`)}`
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">

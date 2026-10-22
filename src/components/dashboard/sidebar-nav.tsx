@@ -10,6 +10,9 @@ import {
   Boxes,
   Wrench,
   Inbox,
+  Users,
+  Settings,
+  CalendarCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -27,10 +30,13 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Ringkasan', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pesanan', href: '/dashboard/orders', icon: ClipboardList },
   { label: 'Leads', href: '/dashboard/leads', icon: Inbox, badgeKey: 'leads' },
+  { label: 'Pelanggan', href: '/dashboard/customers', icon: Users },
   { label: 'Kalender', href: '/dashboard/calendar', icon: CalendarDays },
+  { label: 'Ketersediaan', href: '/dashboard/availability', icon: CalendarCheck },
   { label: 'Produk', href: '/dashboard/products', icon: Package },
   { label: 'Aset Fisik', href: '/dashboard/assets', icon: Boxes },
   { label: 'Maintenance', href: '/dashboard/maintenance', icon: Wrench },
+  { label: 'Pengaturan', href: '/dashboard/settings', icon: Settings, ownerOnly: true },
 ]
 
 export const isNavActive = (pathname: string, href: string) =>

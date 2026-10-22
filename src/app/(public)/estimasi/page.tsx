@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { z } from 'zod'
 import { Estimator } from '@/components/public/estimator'
+import { getStoreSettings } from '@/lib/settings'
 import { getPublicProducts } from '@/lib/public/products'
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ const uuid = z.string().uuid()
 export default async function EstimatePage({ searchParams }: { searchParams: Promise<{ add?: string | string[] }> }) {
   const { add } = await searchParams
   const initialAdd = (Array.isArray(add) ? add : add ? [add] : []).filter((v) => uuid.safeParse(v).success).slice(0, 10)
-  const { products, rules, error } = await getPublicProducts()
+  const [{ products, rules, error }, settings] = await Promise.all([getPublicProducts(), getStoreSettings()])
 
   return (
     <div className="space-y-6">
@@ -24,7 +25,7 @@ export default async function EstimatePage({ searchParams }: { searchParams: Pro
       {error ? (
         <p role="alert" className="text-sm text-destructive">Data produk belum dapat dimuat. Coba beberapa saat lagi.</p>
       ) : (
-        <Estimator products={products} rules={rules} initialAdd={initialAdd} />
+        <Estimator products={products} rules={rules} initialAdd={initialAdd} waNumber={settings.wa_number} />
       )}
     </div>
   )

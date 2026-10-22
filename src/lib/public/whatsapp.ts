@@ -10,8 +10,9 @@ export function buildWhatsAppDraft(args: {
   input: EstimateInput
   result: EstimateResult
   notes?: string[]
+  waNumber?: string
 }): { text: string; url: string } {
-  const { name, destination, fleetLabel, distanceKm, input, result, notes = [] } = args
+  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER } = args
   const L: string[] = []
 
   L.push(`Halo ${STORE_NAME}, saya ingin ${result.hasRental ? 'menyewa' : 'membeli'} berikut:`)
@@ -58,5 +59,5 @@ export function buildWhatsAppDraft(args: {
   L.push('_Estimasi dari website. Harga final mengikuti kesepakatan._')
 
   const text = L.join('\n')
-  return { text, url: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}` }
+  return { text, url: `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}` }
 }

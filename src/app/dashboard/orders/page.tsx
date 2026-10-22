@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus, Search } from 'lucide-react'
+import { Download, Plus, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -143,9 +143,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <h1 className="text-xl font-semibold">Pesanan</h1>
           <p className="text-sm text-muted-foreground">{matched} pesanan{hasFilter ? ' sesuai filter' : ''}.</p>
         </div>
-        <Link href="/dashboard/orders/new" className={buttonVariants()}>
-          <Plus className="mr-2 h-4 w-4" /> Pesanan Baru
-        </Link>
+        <div className="flex items-center gap-2">
+          <a href={`/dashboard/orders/export${sp.status && sp.status !== 'all' && sp.status !== 'active' ? `?status=${sp.status}` : ''}`} className={buttonVariants({ variant: 'outline' })}>
+            <Download className="mr-2 h-4 w-4" /> CSV
+          </a>
+          <Link href="/dashboard/orders/new" className={buttonVariants()}>
+            <Plus className="mr-2 h-4 w-4" /> Pesanan Baru
+          </Link>
+        </div>
       </div>
 
       {sp.created && (

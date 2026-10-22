@@ -35,9 +35,9 @@ type ShippingState =
     | { status: 'unavailable' } // peta bermasalah: ongkir dikonfirmasi admin
     | { status: 'error'; message: string }
 
-export type EstimatorProps = { products: PublicProduct[]; rules: GensetRule[]; initialAdd: string[] }
+export type EstimatorProps = { products: PublicProduct[]; rules: GensetRule[]; initialAdd: string[]; waNumber?: string }
 
-export function useEstimator({ products, rules, initialAdd }: EstimatorProps) {
+export function useEstimator({ products, rules, initialAdd, waNumber }: EstimatorProps) {
     const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
     const gensetProducts = useMemo(() => products.filter((p) => p.capacity_kva !== null), [products])
     const today = todayWIB()
@@ -205,7 +205,7 @@ export function useEstimator({ products, rules, initialAdd }: EstimatorProps) {
             destination: destination.trim(),
             fleetLabel: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
             distanceKm: shipping.status === 'ok' ? shipping.distance_km : null,
-            input, result, notes,
+            input, result, notes, waNumber,
         })
         : null
 
