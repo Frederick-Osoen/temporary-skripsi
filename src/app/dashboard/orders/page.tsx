@@ -6,6 +6,8 @@ import { buttonVariants } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate, formatRupiah } from '@/lib/orders/utils'
 import { STATUS_LABEL, type OrderStatus } from '@/lib/orders/status'
+import { OrderStatusBadge } from '@/components/dashboard/orders/status-badge'
+
 
 type Row = {
   id: string
@@ -30,6 +32,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   if (error) return <p className="text-sm text-destructive">Gagal memuat pesanan: {error.message}</p>
   const orders = (data ?? []) as unknown as Row[]
+  const ids = orders.map((o) => o.id)
+  const { data: allocRows } = ids.length
+    ? await supabase.from('order_allocation_summary').select('order_id, units_needed, units_assigned').in('order_id', ids)
+    : { data: [] as { order_id: string; units_needed: number; units_assigned: number }[] }
+  const allocById = new Map((allocRows ?? []).map((a) => [a.order_id, a]))
 
   return (
     <div className="space-y-4">
@@ -58,6 +65,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               <TableHead>Tanggal</TableHead>
               <TableHead>Tujuan</TableHead>
               <TableHead>Total</TableHead>
+              <TableHead>Unit</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -68,28 +76,47 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 return (
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">
-                        <Link href={`/dashboard/orders/${o.id}`} className="hover:underline">{o.order_code}</Link>
-
+                      <Link href={`/dashboard/orders/${o.id}`} className="hover:underline">{o.order_code}</Link>
                     </TableCell>
+
                     <TableCell>
                       <div>{c?.name ?? '-'}</div>
                       <div className="text-xs text-muted-foreground">{c?.phone_number}</div>
                     </TableCell>
+
                     <TableCell className="whitespace-nowrap">
                       {formatDate(o.start_date)}
                       {o.end_date !== o.start_date && <> – {formatDate(o.end_date)}</>}
                     </TableCell>
-                    <TableCell className="max-w-56 truncate">{o.destination}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatRupiah(Number(o.total_amount))}</TableCell>
+
+                    <TableCell className="max-w-56 truncate">
+                      {o.destination}
+                    </TableCell>
+
+                    <TableCell className="whitespace-nowrap">
+                      {formatRupiah(Number(o.total_amount))}
+                    </TableCell>
+
                     <TableCell>
-                        <Badge variant="secondary">{STATUS_LABEL[o.status as OrderStatus] ?? o.status}</Badge>
+                      {(() => {
+                        const a = allocById.get(o.id)
+                        if (!a || a.units_needed === 0 || o.status === 'completed' || o.status === 'cancelled') return <span className="text-muted-foreground">-</span>
+                        const missing = a.units_needed - a.units_assigned
+                        return missing <= 0
+                          ? <Badge variant="outline" className="border-green-300 bg-green-100 text-green-800">Lengkap</Badge>
+                          : <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">Kurang {missing}</Badge>
+                      })()}
+                    </TableCell>
+
+                    <TableCell>
+                      <OrderStatusBadge status={o.status as OrderStatus} />
                     </TableCell>
                   </TableRow>
                 )
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Belum ada pesanan.</TableCell>
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Belum ada pesanan.</TableCell>
               </TableRow>
             )}
           </TableBody>

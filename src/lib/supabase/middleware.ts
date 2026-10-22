@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { REMEMBER_COOKIE, applyCookiePolicy } from './cookies'
 import { isTransientAuthError } from './auth-utils'
+import { resilientFetch } from './fetch'
 
 export async function updateSession(request: NextRequest) {
   const remember = request.cookies.get(REMEMBER_COOKIE)?.value !== '0'
@@ -25,11 +26,13 @@ export async function updateSession(request: NextRequest) {
           Object.entries(headers ?? {}).forEach(([k, v]) => response.headers.set(k, v))
         },
       },
+      global: { fetch: resilientFetch }
     }
   )
 
   // Jangan taruh kode lain antara createServerClient dan getUser()
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getClaims()
+  const user = data?.claims ?? null
 
   const { pathname, search } = request.nextUrl
   const isServerAction = request.headers.has('next-action')

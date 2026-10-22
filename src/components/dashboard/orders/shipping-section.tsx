@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useFormContext } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { formatRupiah, resolveShipping, toNullableNumber } from '@/lib/orders/utils'
+import { RupiahInput } from '@/components/ui/rupiah-input'
+import { formatNumber, formatRupiah, resolveShipping, } from '@/lib/orders/utils'
 import { PICKUP_DESTINATION, type OrderFormValues, type ShippingValues } from '@/lib/validations/order'
 import { FieldError, Section, selectClass } from './ui'
 
@@ -42,7 +43,7 @@ const TOLL_SOURCE_LABEL = {
 const ZONE_LABEL = { 1: 'Zona 1 (gratis ongkir)', 2: 'Zona 2', 3: 'Zona 3 (luar kota)' } as const
 
 export function ShippingSection({ hasRental, initialManual = false }: { hasRental: boolean; initialManual?: boolean }) {
-    const { register, watch, setValue, getValues, setError, clearErrors, formState: { errors } } =
+    const { control, register, watch, setValue, getValues, setError, clearErrors, formState: { errors } } =
         useFormContext<OrderFormValues>()
 
     const [route, setRoute] = useState<RouteResult | null>(null)
@@ -156,6 +157,11 @@ export function ShippingSection({ hasRental, initialManual = false }: { hasRenta
                     <input type="radio" value="store_pickup" disabled={hasRental} {...modeField} />
                     Ambil di toko <span className="text-xs text-muted-foreground">(khusus sales)</span>
                 </label>
+                {hasRental && (
+                    <p className="text-xs text-muted-foreground opacity-50">
+                        Ambil di toko hanya untuk pesanan sales. Untuk sewa + beli yang diambil sendiri, <span className='font-semibold'>buat dua pesanan terpisah.</span>
+                    </p>
+                )}
             </div>
 
             {mode === 'store_pickup' ? (
@@ -252,14 +258,18 @@ export function ShippingSection({ hasRental, initialManual = false }: { hasRenta
                                 {zone >= 2 && (
                                     <div className="space-y-1">
                                         <Label htmlFor="toll_override">Koreksi tol manual (Rp, pulang-pergi)</Label>
-                                        <Input
-                                            id="toll_override"
-                                            type="number"
-                                            min={0}
-                                            step={1000}
-                                            inputMode="numeric"
-                                            placeholder={route ? String(route.toll_fee) : '0'}
-                                            {...register('shipping.toll_override', { setValueAs: toNullableNumber })}
+                                        <Controller
+                                            control={control}
+                                            name="shipping.toll_override"
+                                            render={({ field }) => (
+                                                <RupiahInput
+                                                    id="toll_override"
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder={route ? formatNumber(route.toll_fee) : '0'}
+                                                />
+                                            )}
                                         />
                                         <FieldError message={errors.shipping?.toll_override?.message} />
                                         <p className="text-xs text-muted-foreground">Kosongkan untuk memakai hasil sistem.</p>
@@ -269,14 +279,18 @@ export function ShippingSection({ hasRental, initialManual = false }: { hasRenta
                                     <Label htmlFor="manual_shipping_fee">
                                         {zone === 3 ? 'Ongkir manual (Rp) *' : 'Ubah ongkir (opsional, hasil nego)'}
                                     </Label>
-                                    <Input
-                                        id="manual_shipping_fee"
-                                        type="number"
-                                        min={0}
-                                        step={1000}
-                                        inputMode="numeric"
-                                        placeholder={suggested !== null ? String(suggested) : '0'}
-                                        {...register('shipping.manual_shipping_fee', { setValueAs: toNullableNumber })}
+                                    <Controller
+                                        control={control}
+                                        name="shipping.manual_shipping_fee"
+                                        render={({ field }) => (
+                                            <RupiahInput
+                                                id="manual_shipping_fee"
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                                onBlur={field.onBlur}
+                                                placeholder={suggested !== null ? formatNumber(suggested) : '0'}
+                                            />
+                                        )}
                                     />
                                     <FieldError message={errors.shipping?.manual_shipping_fee?.message} />
                                     {zone === 3 && suggested !== null && (

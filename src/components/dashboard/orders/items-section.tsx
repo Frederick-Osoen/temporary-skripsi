@@ -1,12 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useFieldArray, useFormContext } from 'react-hook-form'
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form'
 import { Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RupiahInput } from '@/components/ui/rupiah-input'
 import { formatRupiah, lineSubtotal } from '@/lib/orders/utils'
 import type { OrderFormValues, OrderProduct } from '@/lib/validations/order'
 import { FieldError, Section, selectClass } from './ui'
@@ -72,7 +73,7 @@ export function ItemsSection({ products, days }: { products: OrderProduct[]; day
             const qty = Number(row?.qty) || 0
             const price = Number(row?.unit_price) || 0
             const isRental = product?.category === 'rental'
-            const subtotal = lineSubtotal({ qty, unit_price: price, is_rental: !!isRental}, days)
+            const subtotal = lineSubtotal({ qty, unit_price: price, is_rental: !!isRental }, days)
             const overStock = product && qty > product.total_stock
             const priceChanged = product && price !== product.base_price
 
@@ -107,21 +108,20 @@ export function ItemsSection({ products, days }: { products: OrderProduct[]; day
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor={`price-${index}`}>{isRental ? 'Harga per hari (Rp)' : 'Harga satuan (Rp)'}</Label>
-                    <Input
-                      id={`price-${index}`}
-                      type="number"
-                      min={0}
-                      step={1000}
-                      inputMode="numeric"
-                      {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                    <Controller
+                      control={control}
+                      name={`items.${index}.unit_price`}
+                      render={({ field }) => (
+                        <RupiahInput id={`price-${index}`} value={field.value} onValueChange={field.onChange} onBlur={field.onBlur} />
+                      )}
                     />
                     <FieldError message={errors.items?.[index]?.unit_price?.message} />
                   </div>
                   <div className="col-span-2 space-y-1 sm:col-span-1">
                     <Label>Subtotal</Label>
                     <p className="flex h-9 items-center text-sm font-medium">{formatRupiah(subtotal)}</p>
-                    {isRental && days > 1 &&(
-                        <p className="text-xs text-muted-foreground">{qty} × {formatRupiah(price)} × {days} hari</p>
+                    {isRental && days > 1 && (
+                      <p className="text-xs text-muted-foreground">{qty} × {formatRupiah(price)} × {days} hari</p>
                     )}
                   </div>
                 </div>

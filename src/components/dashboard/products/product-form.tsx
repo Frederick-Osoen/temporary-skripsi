@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createProduct, updateProduct } from '@/app/dashboard/products/actions'
 import { safeAction } from '@/lib/action-client'
+import { RupiahInput } from '@/components/ui/rupiah-input'
 import type { Product } from '@/lib/validations/product'
 
 
@@ -14,7 +15,9 @@ const selectClass =
 
 export function ProductForm({ product, onDone }: { product: Product | null; onDone: () => void }) {
   const [pending, startTransition] = useTransition()
+  const [price, setPrice] = useState<number | null>(product?.base_price ?? 0)
   const [error, setError] = useState<string | null>(null)
+  const [overtime, setOvertime] = useState<number | null>(product?.overtime_rate ?? null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,6 +28,7 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
       category: fd.get('category'),
       base_price: fd.get('base_price'),
       total_stock: fd.get('total_stock'),
+      overtime_rate: fd.get('overtime_rate'),
     }
     startTransition(async () => {
       const res = await safeAction(() => (product ? updateProduct(product.id, input) : createProduct(input)))
@@ -51,11 +55,16 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="base_price">Harga dasar (Rp)</Label>
-          <Input id="base_price" name="base_price" type="number" min={0} step={1000} required defaultValue={product?.base_price ?? 0} />
+          <RupiahInput id="base_price" name="base_price" value={price} onValueChange={setPrice} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="total_stock">Stok</Label>
           <Input id="total_stock" name="total_stock" type="number" min={0} step={1} required defaultValue={product?.total_stock ?? 0} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="overtime_rate">Tarif overtime per jam per unit (Rp, opsional)</Label>
+          <RupiahInput id="overtime_rate" name="overtime_rate" value={overtime} onValueChange={setOvertime} placeholder="Kosongkan jika tidak ada overtime" />
+          <p className="text-xs text-muted-foreground">Isi untuk produk yang dikenai overtime (mis. genset) bila pemakaian lebih dari 8 jam per hari.</p>
         </div>
       </div>
       <p className="text-xs text-muted-foreground">

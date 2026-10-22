@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { productSchema } from '@/lib/validations/product'
 import { requireAdmin } from '@/lib/auth'
 import type { ActionResult as Result } from '@/lib/action-client'
+import { retryTransient, isNetworkError } from '@/lib/db-errors'
 
 
 
@@ -68,19 +69,44 @@ export async function deleteProduct(id: string): Promise<Result> {
     if (!ctx.ok) return { ok: false, error: ctx.error, code: ctx.code }
     const supabase = ctx.supabase
 
-    const { data, error } = await supabase.from('products').delete().eq('id', id).select('id')
+    // 1) Cek keterkaitan lebih dulu: pesan akurat berdasarkan data, bukan tebakan dari kode error
+    const [items, units] = await Promise.all([
+      retryTransient(() => supabase.from('order_items').select('id', { count: 'exact', head: true }).eq('product_id', id)),
+      retryTransient(() => supabase.from('unit_assets').select('id', { count: 'exact', head: true }).eq('product_id', id)),
+    ])
+    if (items.error || units.error) {
+      console.error('[products] cek keterkaitan:', items.error ?? units.error)
+      return { ok: false, code: 'UNAVAILABLE', error: 'Gagal memeriksa keterkaitan produk karena koneksi database. Coba lagi.' }
+    }
+    if ((items.count ?? 0) > 0) {
+      return { ok: false, error: `Produk dipakai di ${items.count} baris pesanan, tidak bisa dihapus.` }
+    }
+    if ((units.count ?? 0) > 0) {
+      return { ok: false, error: `Produk masih punya ${units.count} unit fisik. Hapus unit di menu Aset Fisik terlebih dahulu.` }
+    }
+
+    // 2) Hapus. Aman diulang: jika percobaan sebelumnya sebenarnya berhasil, hasilnya sukses
+    const { data, error } = await retryTransient(() =>
+      supabase.from('products').delete().eq('id', id).select('id')
+    )
     if (error) {
-      // 23503 = foreign key violation (ON DELETE RESTRICT)
-      if (error.code === '23503') {
-        return { ok: false, error: 'Produk sudah dipakai di pesanan atau aset fisik, tidak bisa dihapus.' }
+      console.error('[products] delete:', { code: error.code, message: error.message, details: error.details })
+      if (isNetworkError(error)) {
+        return { ok: false, code: 'UNAVAILABLE', error: 'Koneksi ke database terputus. Produk mungkin sudah terhapus. Muat ulang halaman untuk memastikan.' }
       }
-      console.error('[products] delete:', error)
+      if (error.code === '23503') {
+        return { ok: false, error: 'Produk masih dirujuk data lain, tidak bisa dihapus.' }
+      }
       return { ok: false, error: 'Gagal menghapus produk' }
     }
-    if (!data?.length) return { ok: false, error: 'Produk tidak ditemukan' }
+
+    if (!data?.length) {
+      const { data: still } = await supabase.from('products').select('id').eq('id', id).maybeSingle()
+      if (still) return { ok: false, error: 'Produk tidak dapat dihapus (ditolak oleh database).' }
+      // sudah tidak ada: dianggap berhasil
+    }
 
     revalidatePath('/dashboard/products')
     return { ok: true }
   })
-
 }

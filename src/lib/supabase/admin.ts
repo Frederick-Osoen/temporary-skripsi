@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { resilientFetch } from './fetch'
 
 // HANYA untuk dipakai di server (API Route / Server Action).
 // Jangan pernah di-import dari Client Component: service role mem-bypass RLS.
@@ -12,5 +13,6 @@ export function createAdminClient() {
 
     return createClient(url, key, {
         auth: { persistSession: false, autoRefreshToken: false },
+        global: { fetch: resilientFetch },
     })
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
@@ -234,6 +234,11 @@ function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetTy
   const r = calculate(distanceKm, tollOneWayRaw, fleet)
   const cfg = FLEET[fleet]
 
+  const perFleet = (f: FleetType) => {
+  const x = calculate(distanceKm, tollOneWayRaw, f)
+  return { fuel_fee: x.fuel_fee, toll_fee: x.toll_fee, shipping_fee: x.zone === 3 ? null : x.shipping_fee }
+}
+
   return NextResponse.json({
     // Armada yang dipakai
     distance_km: distanceKm,
@@ -245,6 +250,7 @@ function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetTy
     round_trip_km: Math.round(distanceKm * ROUND_TRIP * 100) / 100,
     fuel_rate_per_km: cfg.fuelRatePerKm,
     fuel_fee: r.fuel_fee,
+    fleet_costs: { pickup: perFleet('pickup'), truck: perFleet('truck') },
 
     // Rincian tol
     toll_one_way_car: r.toll_one_way_car, // Harga normal 1 arah
@@ -270,7 +276,7 @@ const tooMany = (retryAfter: number) =>
     { status: 429, headers: { 'Retry-After': String(retryAfter) } }
   )
 
-export async function POST(request: Request) {
+async function handle(request: Request) {
   let json: unknown
   try {
     json = await request.json()
@@ -333,4 +339,37 @@ export async function POST(request: Request) {
     console.error('[distance] error tak terduga:', err)
     return NextResponse.json({ error: 'Kesalahan server' }, { status: 500 })
   }
+}
+
+
+// Pembungkus: mencatat log API untuk metrik skripsi (tanpa memperlambat respons)
+export async function POST(request: Request) {
+  const started = Date.now()
+  const res = await handle(request)
+  const ms = Date.now() - started
+  const source = request.headers.get('x-source') === 'public' ? 'public' : 'admin'
+  const clone = res.clone()
+
+  after(async () => {
+    try {
+      let cacheHit: boolean | null = null
+      let googleCalled: boolean
+      if (res.status === 200) {
+        cacheHit = !!((await clone.json()) as { cached?: boolean })?.cached
+        googleCalled = !cacheHit
+      } else if (res.status === 404 || res.status === 502) {
+        cacheHit = false
+        googleCalled = true // Google dihubungi tetapi gagal/tidak menemukan alamat
+      } else {
+        return // 400, 429, 500: tidak ada panggilan Google
+      }
+      await createAdminClient()
+        .from('api_call_log')
+        .insert({ endpoint: 'distance', cache_hit: cacheHit, google_called: googleCalled, duration_ms: ms, source })
+    } catch (err) {
+      console.error('[distance] gagal mencatat log:', err)
+    }
+  })
+
+  return res
 }

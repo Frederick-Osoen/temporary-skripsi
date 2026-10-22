@@ -12,25 +12,32 @@ import type { OrderFormValues } from '@/lib/validations/order'
 import { FieldError, Section, selectClass } from './ui'
 
 type LookupState = 'idle' | 'searching' | 'found' | 'new' | 'error'
+type Original = { name: string; type: 'regular' | 'corporate' }
 
 export function CustomerSection() {
   const { register, watch, setValue, formState: { errors } } = useFormContext<OrderFormValues>()
   const [state, setState] = useState<LookupState>('idle')
+  const [original, setOriginal] = useState<Original | null>(null) // data tersimpan di database
   const foundPhone = useRef<string | null>(null)
   const seq = useRef(0)
 
   const phone = watch('phone')
+  const customerName = watch('customer_name')
   const customerType = watch('customer_type')
   const normalized = normalizePhone(phone ?? '')
   const debounced = useDebouncedValue(normalized, 500)
 
-  // Tampilan: sedang mengetik (belum di-debounce) dianggap "mencari"
   const effective: LookupState = !normalized ? 'idle' : normalized !== debounced ? 'searching' : state
+  const found = effective === 'found'
+  const changed =
+    found && original !== null &&
+    (customerName.trim() !== original.name || customerType !== original.type)
 
-  // Nomor diubah setelah pelanggan ditemukan: lepaskan auto-fill seketika
+  // Nomor diubah setelah pelanggan ditemukan: lepaskan hubungan dengan data lama
   useEffect(() => {
     if (foundPhone.current && normalized !== foundPhone.current) {
       foundPhone.current = null
+      setOriginal(null)
       setState('idle')
       setValue('customer_name', '')
       setValue('customer_type', 'regular')
@@ -52,11 +59,13 @@ export function CustomerSection() {
       }
       if (res.data) {
         foundPhone.current = debounced
+        setOriginal({ name: res.data.name, type: res.data.type })
         setValue('customer_name', res.data.name, { shouldValidate: true })
         setValue('customer_type', res.data.type)
         setState('found')
       } else {
         foundPhone.current = null
+        setOriginal(null)
         setState('new')
       }
     })()
@@ -66,8 +75,6 @@ export function CustomerSection() {
     }
   }, [debounced, setValue])
 
-  const found = effective === 'found'
-
   return (
     <Section title="Pelanggan">
       <div className="space-y-2">
@@ -75,7 +82,12 @@ export function CustomerSection() {
         <Input id="phone" inputMode="tel" autoComplete="off" placeholder="0812 3456 7890" {...register('phone')} />
         <FieldError message={errors.phone?.message} />
         {effective === 'searching' && <p className="text-xs text-muted-foreground">Mencari pelanggan...</p>}
-        {effective === 'found' && <p className="text-xs text-green-700">Pelanggan terdaftar. Data terisi otomatis.</p>}
+        {found && !changed && (
+          <p className="text-xs text-green-700">Pelanggan terdaftar. Data terisi otomatis dan bisa diubah bila perlu.</p>
+        )}
+        {found && changed && (
+          <p className="text-xs text-amber-700">Data pelanggan akan diperbarui saat pesanan disimpan.</p>
+        )}
         {effective === 'new' && (
           <p className="text-xs text-blue-700">Pelanggan baru. Akan dibuat otomatis saat pesanan disimpan.</p>
         )}
@@ -87,22 +99,16 @@ export function CustomerSection() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="customer_name">Nama pelanggan</Label>
-          <Input id="customer_name" readOnly={found} className={found ? 'bg-muted' : undefined} {...register('customer_name')} />
+          <Input id="customer_name" {...register('customer_name')} />
           <FieldError message={errors.customer_name?.message} />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="customer_type">Tipe pelanggan</Label>
-          {found ? (
-            <p className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm capitalize">
-              {customerType === 'corporate' ? 'Corporate (B2B)' : 'Regular'}
-            </p>
-          ) : (
-            <select id="customer_type" className={selectClass} {...register('customer_type')}>
-              <option value="regular">Regular</option>
-              <option value="corporate">Corporate (B2B)</option>
-            </select>
-          )}
+          <select id="customer_type" className={selectClass} {...register('customer_type')}>
+            <option value="regular">Regular</option>
+            <option value="corporate">Corporate (B2B)</option>
+          </select>
         </div>
       </div>
     </Section>

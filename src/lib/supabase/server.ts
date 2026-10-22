@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { resilientFetch } from './fetch'
 import { REMEMBER_COOKIE, applyCookiePolicy } from './cookies'
 
 // opts.remember hanya dipakai saat login (cookie preferensi baru ditulis di request yang sama)
@@ -26,6 +27,7 @@ export async function createClient(opts?: { remember?: boolean }) {
           }
         },
       },
+      global: { fetch: resilientFetch },
     }
   )
 }

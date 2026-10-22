@@ -13,7 +13,12 @@ export default async function ProductsPage() {
     return <p className="text-sm text-destructive">Gagal memuat produk: {error.message}</p>
   }
 
-  const products: Product[] = (data ?? []).map((p) => ({ ...p, base_price: Number(p.base_price) }))
+  const products: Product[] = (data ?? []).map((p) => ({
+    ...p,
+    base_price: Number(p.base_price),
+    overtime_rate: (p as any).overtime_rate === null ? null : Number((p as any).overtime_rate),
+  }))
+
 
   return (
     <div className="space-y-4">

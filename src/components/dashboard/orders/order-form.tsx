@@ -16,6 +16,7 @@ import { CustomerSection } from './customer-section'
 import { ItemsSection } from './items-section'
 import { ShippingSection } from './shipping-section'
 import { FieldError, Section } from './ui'
+import { newRequestId } from '@/lib/request-id'
 
 const DEFAULTS: OrderFormValues = {
   phone: '',
@@ -37,14 +38,18 @@ type Props = {
   initialValues?: OrderFormValues
   orderId?: string
   version?: number
+  overrideMode?: boolean
+  overtimeFee?: number
 }
 
-export function OrderForm({ products, mode = 'create', initialValues, orderId, version }: Props) {
+export function OrderForm({ products, mode = 'create', initialValues, orderId, version, overrideMode = false, overtimeFee = 0 }: Props) {
   const isEdit = mode === 'edit'
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
+  const [overrideReason, setOverrideReason] = useState('')
+  const [requestId] = useState(newRequestId)
   const submitting = useRef(false) // pengaman klik ganda
   const setupTouched = useRef(isEdit) // mode edit: jangan timpa tanggal pasang yang tersimpan
 
@@ -59,6 +64,7 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
   const values = watch()
   const hasRental = values.items.some((i) => productsById.get(i.product_id)?.category === 'rental')
   const startDate = values.start_date
+
 
   // Sinkronisasi tanggal: sales saja = satu tanggal; rental: setup default H-1
   useEffect(() => {
@@ -87,7 +93,7 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
   )
   const shipping = resolveShipping(values.delivery_mode, values.shipping)
   const shippingFee = shipping.ok ? shipping.value.shipping_fee : 0
-  const grandTotal = itemsTotal + shippingFee
+  const grandTotal = itemsTotal + shippingFee + overtimeFee
 
   function onFail(res: ActionFail) {
     submitting.current = false
@@ -96,6 +102,11 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
   }
 
   const onSubmit = handleSubmit((data) => {
+    if (overrideMode && overrideReason.trim().length < 5) {
+      setSubmitError('Alasan buka kunci wajib diisi (minimal 5 karakter).')
+      return
+    }
+
     if (submitting.current) return
     submitting.current = true
     setSubmitError(null)
@@ -103,16 +114,22 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
 
     startTransition(async () => {
       if (isEdit && orderId && version !== undefined) {
-        const res = await safeAction(() => updateOrder(orderId, version, data))
+        const res = await safeAction(() =>
+          updateOrder(orderId, version, data, overrideMode ? overrideReason.trim() : undefined)
+        )
         if (res.ok) {
           router.push(`/dashboard/orders/${orderId}?updated=1`)
           return
         }
         onFail(res)
       } else {
-        const res = await safeAction(() => createOrder(data))
+        const res = await safeAction(() => createOrder(data, requestId))
         if (res.ok) {
-          router.push(`/dashboard/orders?created=${encodeURIComponent(res.data.code)}`)
+          router.push(
+            res.data.duplicate
+              ? `/dashboard/orders/${res.data.id}?duplicate=1`
+              : `/dashboard/orders?created=${encodeURIComponent(res.data.code)}`
+          )
           return
         }
         onFail(res)
@@ -124,6 +141,17 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
     <FormProvider {...methods}>
       <form onSubmit={onSubmit} noValidate className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {overrideMode && (
+            <Section title="Buka Kunci (Owner)">
+              <p className="text-sm text-amber-800">
+                Pesanan ini sudah final. Perubahan dicatat di riwayat beserta alasan di bawah. Status dan pembayaran tidak berubah.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="override_reason">Alasan perubahan *</Label>
+                <Input id="override_reason" maxLength={500} value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} />
+              </div>
+            </Section>
+          )}
           {isEdit ? (
             <Section title="Pelanggan">
               <p className="text-sm">
@@ -190,6 +218,12 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
                 <span className="text-muted-foreground">Ongkir</span>
                 <span>{shipping.ok ? formatRupiah(shippingFee) : '-'}</span>
               </div>
+              {overtimeFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Overtime genset</span>
+                  <span>{formatRupiah(overtimeFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t pt-2 text-base font-semibold">
                 <span>Total</span>
                 <span>{formatRupiah(grandTotal)}</span>

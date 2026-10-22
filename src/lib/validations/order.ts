@@ -11,7 +11,7 @@ const rupiah = z
     .number({ error: 'Isi dengan angka' })
     .int('Harus bilangan bulat')
     .min(0, 'Tidak boleh negatif')
-    .max(999_999_999, 'Terlalu besar')
+    .max(99_999_999_999, 'Terlalu besar')
 
 export const orderItemSchema = z.object({
     line_id: z.string().uuid().nullable().optional(), // id baris order_items  

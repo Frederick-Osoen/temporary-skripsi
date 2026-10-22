@@ -2,6 +2,8 @@ import type { ShippingValues } from '@/lib/validations/order'
 
 const rupiahFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })
 export const formatRupiah = (n: number) => rupiahFmt.format(Number.isFinite(n) ? n : 0)
+export const todayWIB = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+
 
 // 'YYYY-MM-DD' ditampilkan apa adanya (tanpa geser zona waktu)
 export const formatDate = (d: string) =>
@@ -21,6 +23,8 @@ export const toNullableNumber = (v: unknown): number | null => {
   const n = Number(v)
   return Number.isFinite(n) ? n : null
 }
+
+export const formatNumber = (n: number) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0}).format(n)
 
 const num = (n: number) => (Number.isFinite(n) ? n : 0)
 
