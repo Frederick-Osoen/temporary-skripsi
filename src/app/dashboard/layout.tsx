@@ -25,8 +25,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
     return <AuthProblem code={admin.code} message={admin.error} fullScreen />
   }
 
+  // Jumlah lead baru untuk badge menu. Gagal menghitung tidak boleh menghalangi dashboard.
+  let newLeads = 0
+  try {
+    const { count } = await admin.supabase.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'new')
+    newLeads = count ?? 0
+  } catch {
+    newLeads = 0
+  }
+
   return (
-    <DashboardShell name={admin.name} role={admin.role} signOutAction={signOut}>
+    <DashboardShell name={admin.name} role={admin.role} newLeads={newLeads} signOutAction={signOut}>
       {children}
     </DashboardShell>
   )

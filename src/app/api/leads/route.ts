@@ -16,6 +16,7 @@ const leadSchema = z.object({
     items: z
       .array(
         z.object({
+          product_id: z.string().uuid(),
           name: z.string().trim().min(1).max(150),
           qty: z.number().int().min(1).max(99),
           category: z.enum(['rental', 'sales']),
@@ -30,6 +31,8 @@ const leadSchema = z.object({
     delivery: z.enum(['delivery', 'store_pickup']),
     destination: z.string().trim().max(200).nullable(),
     fleet: z.string().max(100).nullable(),
+    fleet_pickups: z.number().int().min(0).max(50),
+    fleet_trucks: z.number().int().min(0).max(50),
     distance_km: z.number().min(0).max(5000).nullable(),
     shipping_pending: z.boolean(),
     notes: z.array(z.string().max(300)).max(10),

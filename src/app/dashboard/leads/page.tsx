@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { LeadsList, type Lead } from '@/components/dashboard/leads/leads-list'
+import { LeadsList } from '@/components/dashboard/leads/leads-list'
+import type { LeadRow } from '@/lib/leads'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ export default async function LeadsPage() {
 
   if (error) return <p className="text-sm text-destructive">Gagal memuat leads: {error.message}</p>
 
-  const leads: Lead[] = (data ?? []).map((l) => ({
+  const leads: LeadRow[] = (data ?? []).map((l) => ({
     id: l.id,
     created_at: l.created_at,
     customer_name: l.customer_name,

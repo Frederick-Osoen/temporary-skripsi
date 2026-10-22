@@ -215,7 +215,7 @@ export function useEstimator({ products, rules, initialAdd }: EstimatorProps) {
             customer_name: name.trim() || undefined,
             total_estimate: Math.round(result.total),
             payload: {
-                items: lines.map((l) => ({ name: l.name, qty: l.qty, category: l.category })),
+                items: lines.map((l) => ({ product_id: l.product_id, name: l.name, qty: l.qty, category: l.category })),
                 start_date: startDate,
                 end_date: input.end_date,
                 start_time: hasGenset ? startTime : null,
@@ -223,6 +223,8 @@ export function useEstimator({ products, rules, initialAdd }: EstimatorProps) {
                 delivery,
                 destination: delivery === 'delivery' ? destination.trim() : null,
                 fleet: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
+                fleet_pickups: delivery === 'delivery' ? plan.pickups : 0,
+                fleet_trucks: delivery === 'delivery' ? plan.trucks : 0,
                 distance_km: shipping.status === 'ok' ? shipping.distance_km : null,
                 shipping_pending: result.shippingPending,
                 notes,

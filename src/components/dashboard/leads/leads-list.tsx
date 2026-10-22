@@ -3,37 +3,16 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { updateLeadStatus } from '@/app/dashboard/leads/actions'
 import { safeAction } from '@/lib/action-client'
 import { formatDate, formatRupiah } from '@/lib/orders/utils'
+import type { LeadRow, LeadStatus } from '@/lib/leads'
 
-export type LeadStatus = 'new' | 'contacted' | 'converted' | 'dismissed'
-
-export type Lead = {
-  id: string
-  created_at: string
-  customer_name: string
-  payload: {
-    items?: { name: string; qty: number; category: string }[]
-    start_date?: string
-    end_date?: string
-    start_time?: string | null
-    end_time?: string | null
-    delivery?: string
-    destination?: string | null
-    fleet?: string | null
-    distance_km?: number | null
-    shipping_pending?: boolean
-    notes?: string[]
-  } | null
-  total_estimate: number
-  status: LeadStatus
-  converted_order_id: string | null
-}
+export type Lead = LeadRow
 
 const STATUS: { value: LeadStatus; label: string; badge: string }[] = [
-  { value: 'new', label: 'Baru', badge: 'border-blue-300 bg-blue-100 text-blue-800' },
+  { value: 'new', label: 'Baru', badge: 'border-sky-300 bg-sky-100 text-sky-800' },
   { value: 'contacted', label: 'Sudah dihubungi', badge: 'border-amber-300 bg-amber-100 text-amber-800' },
   { value: 'converted', label: 'Jadi pesanan', badge: 'border-green-300 bg-green-100 text-green-800' },
   { value: 'dismissed', label: 'Diabaikan', badge: 'border-gray-300 bg-gray-100 text-gray-700' },
@@ -76,12 +55,12 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
         ))}
       </div>
 
-      {error && (
-        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-      )}
+      {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       {shown.length === 0 && (
-        <p className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">Tidak ada lead pada filter ini.</p>
+        <p className="rounded-lg border border-dashed bg-background py-10 text-center text-sm text-muted-foreground">
+          Tidak ada lead pada filter ini.
+        </p>
       )}
 
       <ul className="space-y-2">
@@ -89,11 +68,12 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
           const p = l.payload
           const st = STATUS.find((s) => s.value === l.status)
           const isRental = p?.items?.some((i) => i.category === 'rental')
+          const open = l.status === 'new' || l.status === 'contacted'
           return (
-            <li key={l.id} className="rounded-lg border bg-background p-3 text-sm">
+            <li key={l.id} className="rounded-xl border bg-background p-4 text-sm shadow-xs">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="font-medium">{l.customer_name}</p>
+                  <p className="font-semibold">{l.customer_name}</p>
                   <p className="text-xs text-muted-foreground">{dateTime.format(new Date(l.created_at))}</p>
                 </div>
                 <div className="text-right">
@@ -130,20 +110,30 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
+                {open && (
+                  <Link href={`/dashboard/orders/new?lead=${l.id}`} className={buttonVariants({ size: 'sm' })}>
+                    Jadikan pesanan
+                  </Link>
+                )}
+                {open && (
+                  <Button size="sm" variant="ghost" disabled={pendingId === l.id} onClick={() => change(l.id, 'dismissed')}>
+                    Abaikan
+                  </Button>
+                )}
+                {l.status === 'converted' && l.converted_order_id && (
+                  <Link href={`/dashboard/orders/${l.converted_order_id}`} className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+                    Lihat pesanan
+                  </Link>
+                )}
                 <select
                   aria-label="Ubah status lead"
-                  className={selectClass}
+                  className={`${selectClass} ml-auto`}
                   value={l.status}
                   disabled={pendingId === l.id}
                   onChange={(e) => change(l.id, e.target.value as LeadStatus)}
                 >
                   {STATUS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
-                {l.converted_order_id ? (
-                  <Link href={`/dashboard/orders/${l.converted_order_id}`} className="text-xs underline">Lihat pesanan</Link>
-                ) : (
-                  <Link href="/dashboard/orders/new" className="text-xs underline">Buat pesanan</Link>
-                )}
               </div>
             </li>
           )

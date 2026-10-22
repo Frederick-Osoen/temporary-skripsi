@@ -2,7 +2,7 @@ export type LeadPayload = {
   customer_name?: string
   total_estimate: number
   payload: {
-    items: { name: string; qty: number; category: 'rental' | 'sales' }[]
+    items: { product_id: string; name: string; qty: number; category: 'rental' | 'sales' }[]
     start_date: string
     end_date: string
     start_time: string | null
@@ -10,6 +10,8 @@ export type LeadPayload = {
     delivery: 'delivery' | 'store_pickup'
     destination: string | null
     fleet: string | null
+    fleet_pickups: number
+    fleet_trucks: number
     distance_km: number | null
     shipping_pending: boolean
     notes: string[]

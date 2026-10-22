@@ -32,8 +32,11 @@ const DEFAULTS: OrderFormValues = {
   shipping: { zone: 0, distance_km: 0, auto_fuel_fee: 0, auto_toll_fee: 0, toll_override: null, manual_shipping_fee: null },
 }
 
+export type LeadBanner = { id: string; name: string; createdAt: string; info: string[]; warnings: string[] }
+
 type Props = {
   products: OrderProduct[]
+  lead?: LeadBanner // diisi bila form dibuka dari halaman Leads
   mode?: 'create' | 'edit'
   initialValues?: OrderFormValues
   orderId?: string
@@ -42,7 +45,7 @@ type Props = {
   overtimeFee?: number
 }
 
-export function OrderForm({ products, mode = 'create', initialValues, orderId, version, overrideMode = false, overtimeFee = 0 }: Props) {
+export function OrderForm({ products, lead, mode = 'create', initialValues, orderId, version, overrideMode = false, overtimeFee = 0 }: Props) {
   const isEdit = mode === 'edit'
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -123,7 +126,7 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
         }
         onFail(res)
       } else {
-        const res = await safeAction(() => createOrder(data, requestId))
+        const res = await safeAction(() => createOrder(data, requestId, lead?.id))
         if (res.ok) {
           router.push(
             res.data.duplicate
@@ -141,6 +144,24 @@ export function OrderForm({ products, mode = 'create', initialValues, orderId, v
     <FormProvider {...methods}>
       <form onSubmit={onSubmit} noValidate className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {lead && !isEdit && (
+            <Section title="Dari Lead">
+              <p className="text-sm">
+                Data diisi otomatis dari estimasi pelanggan <span className="font-medium">{lead.name}</span>
+                <span className="text-muted-foreground"> ({lead.createdAt})</span>. Lengkapi nomor WhatsApp, cek harga hasil negosiasi, lalu simpan. Lead akan otomatis ditandai &quot;Jadi pesanan&quot;.
+              </p>
+              {lead.warnings.length > 0 && (
+                <ul role="alert" className="list-disc space-y-1 rounded-md bg-amber-50 py-2 pl-7 pr-3 text-xs text-amber-900">
+                  {lead.warnings.map((w) => <li key={w}>{w}</li>)}
+                </ul>
+              )}
+              {lead.info.length > 0 && (
+                <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                  {lead.info.map((i) => <li key={i}>{i}</li>)}
+                </ul>
+              )}
+            </Section>
+          )}
           {overrideMode && (
             <Section title="Buka Kunci (Owner)">
               <p className="text-sm text-amber-800">
