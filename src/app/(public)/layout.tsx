@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { MotionProvider } from '@/components/public/motion'
 import { SiteFooter } from '@/components/public/site-footer'
 import { SiteHeader } from '@/components/public/site-header'
 import { CartProvider } from '@/lib/public/cart'
@@ -14,15 +13,19 @@ export const metadata: Metadata = {
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
     const { wa_number } = await getStoreSettings()
     return (
-        <MotionProvider>
-            <div className="flex min-h-screen flex-col">
-                <CartProvider>
-                    <SiteHeader waNumber={wa_number} />
-                    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-                    <SiteFooter />
-                    <CartBar />
-                </CartProvider>
-            </div>
-        </MotionProvider>
+        <div className="flex min-h-screen flex-col">
+            <a
+                href="#konten"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-md focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+            >
+                Lewati ke konten
+            </a>
+            <CartProvider>
+                <SiteHeader waNumber={wa_number} />
+                <main id="konten" className="flex-1">{children}</main>
+                <SiteFooter />
+                <CartBar />
+            </CartProvider>
+        </div>
     )
 }

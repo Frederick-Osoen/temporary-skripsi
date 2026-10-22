@@ -40,6 +40,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-ink: var(--ink);
+  --color-frost: var(--frost);
   --color-volt: var(--volt);
   --color-volt-foreground: var(--volt-foreground);
   --color-success: var(--success);
@@ -65,6 +66,7 @@
 :root {
   /* Merek */
   --ink: #0b1b33;              /* navy: heading, latar gelap */
+  --frost: #22d3ee;            /* cyan: sisi 'dingin' skala termal */
   --volt: #f59e0b;             /* amber: CTA utama, genset */
   --volt-foreground: #1f1300;
   --success: #15803d;
@@ -111,6 +113,7 @@
 
 .dark {
   --ink: #e6f0f8;
+  --frost: #67e8f9;
   --background: #08111f;
   --foreground: #e6f0f8;
   --card: #0d1b30;
@@ -214,3 +217,154 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* =====================================================================
+   FASE 6F — TAMPILAN PUBLIK
+   Konsep "dari panas ke dingin": amber (--volt) = panas/daya,
+   cyan (--frost) = dingin. Semua warna tetap dari token di atas.
+   ===================================================================== */
+
+/* Satu momen animasi: skala termal menyala saat halaman dibuka */
+@keyframes thermal-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes thermal-drop {
+  from { transform: translateY(0); opacity: 0; }
+  20%  { opacity: 1; }
+  to   { transform: translateY(var(--drop, 268px)); opacity: 1; }
+}
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+@layer utilities {
+  /* -------- Permukaan -------- */
+
+  /* Band gelap: navy dengan cahaya cyan di kanan atas dan amber di kiri bawah */
+  .surface-ink {
+    background:
+      radial-gradient(52rem 26rem at 88% -8%, color-mix(in oklab, var(--frost) 22%, transparent), transparent 62%),
+      radial-gradient(38rem 22rem at -6% 108%, color-mix(in oklab, var(--volt) 14%, transparent), transparent 60%),
+      var(--ink);
+    color: #fff;
+  }
+  /* Band terang bernuansa hangat: sisi "panas" dari cerita */
+  .surface-warm {
+    background:
+      radial-gradient(40rem 20rem at 100% 0%, color-mix(in oklab, var(--volt) 10%, transparent), transparent 65%),
+      var(--muted);
+  }
+  /* Tekstur halus supaya band gelap tidak terasa rata seperti plastik */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  /* Panel instrumen: dipakai di estimator dan kartu di band gelap */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+  }
+  .panel-ink {
+    background: color-mix(in oklab, #fff 7%, transparent);
+    border: 1px solid color-mix(in oklab, #fff 14%, transparent);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Garis tipis bergradasi: penanda batas seksi, bukan hiasan */
+  .rule-thermal {
+    height: 1px;
+    background: linear-gradient(90deg, var(--volt), var(--frost) 55%, transparent);
+  }
+
+  /* -------- Angka sebagai konten -------- */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.02em;
+  }
+  .spec {
+    font-family: var(--font-heading);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+
+  /* -------- Skala termal (hero) -------- */
+  .thermal {
+    --drop: 268px;
+    position: relative;
+    width: 2.75rem;
+    height: 19rem;
+  }
+  .thermal__bar {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(
+      180deg,
+      var(--volt) 0%,
+      color-mix(in oklab, var(--volt), var(--frost) 45%) 42%,
+      color-mix(in oklab, var(--volt), var(--frost) 80%) 70%,
+      var(--frost) 100%
+    );
+    /* Dipotong jadi segmen seperti bar alat ukur */
+    mask-image: repeating-linear-gradient(180deg, #000 0 12px, transparent 12px 17px);
+    animation: thermal-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .thermal__glow {
+    position: absolute;
+    inset: -14% -140%;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--frost) 28%, transparent), transparent 70%);
+    animation: glow-pulse 5s ease-in-out infinite;
+    animation-delay: 900ms;
+  }
+  .thermal__marker {
+    position: absolute;
+    left: -0.5rem;
+    right: -0.5rem;
+    top: 0.75rem;
+    height: 2px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 40%, transparent);
+    animation: thermal-drop 1100ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  }
+
+  /* Masuk sekali, dipakai hemat (hanya elemen kunci di bawah lipatan) */
+  .animate-rise {
+    animation: rise 420ms ease-out both;
+  }
+
+  /* Baris produk/katalog yang bisa digeser di layar kecil */
+  .rail {
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { scroll-snap-align: start; }
+
+  /* Fokus yang jelas di atas band gelap */
+  .focus-ink:focus-visible {
+    outline: 2px solid var(--frost);
+    outline-offset: 2px;
+  }
+}
+

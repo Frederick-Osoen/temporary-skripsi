@@ -31,14 +31,19 @@ Aturan pemakaian warna:
 - Kontras teks minimal 4.5:1 (target Lighthouse Accessibility ≥ 85). Jangan menaruh teks `muted-foreground` di atas gradien.
 - Mengganti palet = mengubah `:root` di `globals.css`. Tidak perlu menyentuh komponen.
 
-Utilitas siap pakai (di `globals.css`): `.bg-hero`, `.text-gradient`, `.card-lift`, `.skeleton`, `.animate-float`.
+Utilitas siap pakai (di `globals.css`):
+- Lama: `.bg-hero`, `.text-gradient`, `.card-lift`, `.skeleton`, `.animate-float`.
+- Fase 6F: `.surface-ink` dan `.surface-warm` (band gelap/hangat), `.bg-noise` (tekstur halus di band gelap), `.panel` dan `.panel-ink` (kartu), `.rule-thermal` (garis amber -> cyan), `.spec` dan `.tnum` (angka tabular sebagai konten), `.thermal` (skala termal di hero), `.rail`, `.focus-ink` (fokus di atas latar gelap), `.animate-rise`.
+
+Token tambahan: `--frost` (`#22d3ee`, kelas `text-frost`/`bg-frost`) untuk sisi "dingin" skala termal.
 
 Tipografi: heading memakai **Plus Jakarta Sans** (`--font-jakarta`, otomatis lewat `h1–h4`), isi memakai **Inter**. Jangan menambah font baru.
 
 ## 3. Animasi: murah dan ringan
 
 - Hanya animasikan `transform` dan `opacity`. Jangan animasikan `width/height/top/left`.
-- Pakai CSS (utilitas di atas) atau `FadeIn` dari `components/public/motion.tsx` (framer-motion `LazyMotion`, sudah ada). **Dilarang** menambah library animasi, Lottie, WebGL, atau partikel.
+- Pakai CSS (utilitas di atas). `FadeIn` dari `components/public/motion.tsx` masih tersedia, tetapi **sejak Fase 6F tidak dipakai di halaman publik**, sehingga framer-motion tidak ikut terkirim ke pengunjung. Pakai lagi hanya kalau memang perlu, dan sadari ongkos bundelnya. **Dilarang** menambah library animasi, Lottie, WebGL, atau partikel.
+- Satu momen animasi masuk per halaman sudah cukup. Di beranda, itu skala termal di hero (`.thermal`, murni CSS). Fade-in berurutan di setiap seksi justru membuat halaman terasa generik.
 - Hero (di atas lipatan layar) **tanpa animasi masuk**, supaya LCP cepat. Animasi masuk hanya untuk bagian di bawah lipatan, sekali saja.
 - Durasi 150–400 ms, easing `ease-out`. Semua animasi otomatis dimatikan oleh `prefers-reduced-motion` (sudah diatur global).
 - Loading data memakai `.skeleton`, bukan spinner kosong.
@@ -81,3 +86,16 @@ Perilaku yang harus dipertahankan di estimator:
 3. Diuji manual di lebar 360 px, 768 px, dan 1280 px.
 4. Alur lengkap tetap jalan: tambah ke keranjang → estimasi → hitung ongkir → WhatsApp (dan lead tercatat di `/dashboard/leads`).
 5. Audit Lighthouse mobile tidak turun dari target di bagian 4.
+
+## 8. Catatan Fase 6F
+
+Konsep tampilan publik: **"dari panas ke dingin"**. Amber (`--volt`) mewakili panas dan daya, cyan (`--frost`) mewakili dingin. Band terang dan band navy (`.surface-ink`) berselang-seling; angka ditampilkan seperti pelat spesifikasi alat (`.spec`, tabular).
+
+Yang berubah secara struktural:
+- `app/(public)/layout.tsx` tidak lagi membungkus isi halaman dengan container. **Setiap halaman menyediakan sendiri** `mx-auto max-w-6xl px-4`, supaya hero bisa penuh selebar layar. Layout juga menambahkan tautan "Lewati ke konten" (`#konten`).
+- `SiteHeader` kini Client Component: ada status menu aktif, bayangan saat digulir, indikator keranjang, dan menu Sheet di layar kecil. `SiteFooter` membaca sendiri nomor WhatsApp dari Pengaturan Toko.
+- Katalog memakai `components/public/catalog-browser.tsx` (pencarian + filter kategori di sisi klien). Anchor `#sewa`, `#genset`, `#jual` tetap ada.
+- Estimator: hanya tampilan yang berubah. Daftar produk memakai pencarian dan tombol tambah yang memanggil `addProduct()` langsung, jadi `pick`/`setPick` dari hook tidak lagi dipakai UI (tetap dikembalikan hook, jangan dihapus). Ada penanda kemajuan 4 langkah yang **murni turunan dari state hook**, dan bilah total yang menempel di bawah pada layar kecil.
+- `useEstimator` menerima prop opsional `waNumber` (dari Pengaturan Toko). Pertahankan prop ini.
+
+Angka di beranda harus tetap jujur: diambil dari katalog (`base_price` terendah), dari `STANDARD_HOURS`, atau dari aturan yang memang berlaku. Jangan menambah klaim seperti jumlah pelanggan atau rating tanpa data.
