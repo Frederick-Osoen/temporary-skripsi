@@ -19,6 +19,14 @@ async function guard(fn: () => Promise<Result>): Promise<Result> {
   }
 }
 
+// Perubahan produk harus langsung terlihat di dashboard DAN katalog publik (yang di-cache 60 detik)
+function revalidatePublicCatalog() {
+  revalidatePath('/dashboard/products')
+  revalidatePath('/katalog')
+  revalidatePath('/estimasi')
+  revalidatePath('/')
+}
+
 export async function createProduct(input: unknown): Promise<Result> {
   return guard(async () => {
     const parsed = productSchema.safeParse(input)
@@ -33,7 +41,7 @@ export async function createProduct(input: unknown): Promise<Result> {
       console.error('[products] insert:', error)
       return { ok: false, error: 'Gagal menyimpan produk' }
     }
-    revalidatePath('/dashboard/products')
+    revalidatePublicCatalog()
     return { ok: true }
   })
 
@@ -56,7 +64,7 @@ export async function updateProduct(id: string, input: unknown): Promise<Result>
     }
     if (!data?.length) return { ok: false, error: 'Produk tidak ditemukan' }
 
-    revalidatePath('/dashboard/products')
+    revalidatePublicCatalog()
     return { ok: true }
   })
 }
@@ -106,7 +114,28 @@ export async function deleteProduct(id: string): Promise<Result> {
       // sudah tidak ada: dianggap berhasil
     }
 
-    revalidatePath('/dashboard/products')
+    revalidatePublicCatalog()
+    return { ok: true }
+  })
+}
+
+// Sembunyikan/tampilkan produk di katalog publik dengan satu klik (tanpa membuka form)
+export async function setProductVisibility(id: string, isPublic: boolean): Promise<Result> {
+  return guard(async () => {
+    if (!z.string().uuid().safeParse(id).success) return { ok: false, error: 'ID tidak valid' }
+    if (typeof isPublic !== 'boolean') return { ok: false, error: 'Nilai tidak valid' }
+
+    const ctx = await requireAdmin()
+    if (!ctx.ok) return { ok: false, error: ctx.error, code: ctx.code }
+
+    const { data, error } = await ctx.supabase.from('products').update({ is_public: isPublic }).eq('id', id).select('id')
+    if (error) {
+      console.error('[products] visibility:', error)
+      return { ok: false, error: 'Gagal mengubah status tampil' }
+    }
+    if (!data?.length) return { ok: false, error: 'Produk tidak ditemukan' }
+
+    revalidatePublicCatalog()
     return { ok: true }
   })
 }

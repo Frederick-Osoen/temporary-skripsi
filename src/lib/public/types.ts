@@ -7,4 +7,6 @@ export type PublicProduct = {
   capacity_kva: number | null // terisi hanya untuk genset
   description: string | null
   image_path: string | null
+  is_featured: boolean
+  sort_order: number
 }

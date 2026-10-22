@@ -1,7 +1,11 @@
+import type { Metadata } from 'next'
 import { getCurrentAdmin } from '@/lib/auth'
 import { signOut } from '@/app/auth/actions'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { AuthProblem } from '@/components/dashboard/auth-problem'
+
+// Area admin tidak boleh diindeks mesin pencari
+export const metadata: Metadata = { title: { default: 'Dashboard', template: '%s | Dashboard JJ Teknik' }, robots: { index: false, follow: false } }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const admin = await getCurrentAdmin()
