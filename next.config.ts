@@ -8,6 +8,9 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 const nextConfig: NextConfig = {
   serverExternalPackages: ['undici'],
   images: {
+    // Jaringan IPv6/DNS64 (NAT64) membuat host Supabase terbaca sebagai IP privat saat pengembangan.
+    // Aman: hanya host Supabase di remotePatterns yang boleh dimuat. Produksi tetap ketat.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
     remotePatterns: supabaseHost
       ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/product-images/**' }]
       : [],

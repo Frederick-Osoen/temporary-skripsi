@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { EVENT_TYPE_LABEL, type EventType, type GalleryItem } from '@/lib/public/content'
+import { EVENT_TYPE_LABEL, type EventType, type GalleryItem } from '@/lib/public/content-types'
 import { productImageUrl } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 

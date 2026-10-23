@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { EVENT_TYPE_LABEL, type Testimonial } from '@/lib/public/content'
+import { EVENT_TYPE_LABEL, type Testimonial } from '@/lib/public/content-types'
 import { productImageUrl } from '@/lib/storage'
 
 export function TestimonialList({ items }: { items: Testimonial[] }) {
