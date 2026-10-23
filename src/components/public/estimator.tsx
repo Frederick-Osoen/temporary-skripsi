@@ -30,7 +30,7 @@ function Panel({
   return (
     <section aria-labelledby={`langkah-${step}`} className="panel overflow-hidden">
       <header className="flex items-start gap-3 border-b bg-muted/40 px-4 py-3.5 sm:px-5">
-        <span className="spec mt-0.5 text-sm font-bold text-primary">{step}</span>
+        <span className="num mt-0.5 text-sm font-bold text-primary">{step}</span>
         <div>
           <h2 id={`langkah-${step}`} className="font-heading text-base font-semibold">
             {title}
@@ -319,7 +319,7 @@ export function Estimator(props: EstimatorProps) {
 
             {hasRental && datesOk && (
               <p className="flex items-baseline gap-2 rounded-lg bg-muted/50 px-3.5 py-3">
-                <span className="spec text-2xl font-bold text-ink">{result.days}</span>
+                <span className="num text-2xl font-bold text-ink">{result.days}</span>
                 <span className="text-sm text-muted-foreground">hari sewa</span>
               </p>
             )}
@@ -440,7 +440,7 @@ export function Estimator(props: EstimatorProps) {
                   <div className="rounded-lg border bg-muted/40 p-3.5">
                     <div className="flex flex-wrap gap-x-8 gap-y-3">
                       <div>
-                        <p className="spec text-xl font-bold text-ink">± {shipping.distance_km} km</p>
+                        <p className="num text-xl font-bold text-ink">± {shipping.distance_km} km</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">Jarak dari Pandaan</p>
                       </div>
                       <div>
@@ -449,7 +449,7 @@ export function Estimator(props: EstimatorProps) {
                       </div>
                       {shipping.zone === 2 && result.shippingFee !== null && (
                         <div>
-                          <p className="spec text-xl font-bold text-ink">{formatRupiah(result.shippingFee)}</p>
+                          <p className="num text-xl font-bold text-ink">{formatRupiah(result.shippingFee)}</p>
                           <p className="mt-0.5 text-xs text-muted-foreground">Ongkir pulang-pergi</p>
                         </div>
                       )}
@@ -511,7 +511,7 @@ export function Estimator(props: EstimatorProps) {
               <div className="flex items-end justify-between gap-4 border-t border-dashed pt-4">
                 <span className="text-sm font-medium">Perkiraan total</span>
                 <span className="text-right">
-                  <span className="spec block text-3xl font-bold text-ink">{formatRupiah(result.total)}</span>
+                  <span className="num block text-3xl font-bold text-ink">{formatRupiah(result.total)}</span>
                   {result.shippingPending && <span className="text-xs text-muted-foreground">belum termasuk ongkir</span>}
                 </span>
               </div>
@@ -549,7 +549,7 @@ export function Estimator(props: EstimatorProps) {
           <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="min-w-0">
               <p className="text-[11px] text-muted-foreground">Perkiraan total</p>
-              <p className="spec truncate text-lg font-bold text-ink">
+              <p className="num truncate text-lg font-bold text-ink">
                 {formatRupiah(result.total)}
                 {result.shippingPending && <span className="text-xs font-normal text-muted-foreground"> + ongkir</span>}
               </p>

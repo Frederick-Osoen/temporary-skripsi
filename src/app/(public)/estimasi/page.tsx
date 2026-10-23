@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { z } from 'zod'
 import { Estimator } from '@/components/public/estimator'
+import { PageHero } from '@/components/public/page-hero'
 import { getStoreSettings } from '@/lib/settings'
 import { getPublicProducts } from '@/lib/public/products'
 
@@ -18,15 +19,10 @@ export default async function EstimatePage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <div className="border-b bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:py-14">
-          <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">Estimasi biaya</h1>
-          <p className="mt-4 max-w-xl text-muted-foreground">
-            Tanpa daftar akun dan tanpa pembayaran di situs. Isi empat langkah di bawah, lalu kirim rinciannya ke admin lewat
-            WhatsApp.
-          </p>
-        </div>
-      </div>
+      <PageHero
+        title="Estimasi biaya."
+        lead="Tanpa daftar akun dan tanpa pembayaran di situs. Isi empat langkah, lalu kirim rinciannya ke admin lewat WhatsApp."
+      />
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
         {error ? (

@@ -1,213 +1,198 @@
 import Link from 'next/link'
-import { Fan, MapPin, Snowflake, Truck, Wrench, Zap } from 'lucide-react'
-import { buttonVariants } from '@/components/ui/button'
+import { Truck, Wrench, MapPin } from 'lucide-react'
+import { DayTimeline, type DayStep } from '@/components/public/day-timeline'
+import { FaqList } from '@/components/public/faq-list'
+import { GuaranteeStamp } from '@/components/public/guarantee-stamp'
+import { JsonLd, faqLd, localBusinessLd } from '@/components/public/json-ld'
+import { NeedsCalculator } from '@/components/public/needs-calculator'
 import { ProductCard } from '@/components/public/product-card'
-import { ThermalGauge } from '@/components/public/thermal'
+import { TentScene } from '@/components/public/tent-scene'
+import { TestimonialList } from '@/components/public/testimonial-list'
+import { GalleryGrid } from '@/components/public/gallery-grid'
 import { STANDARD_HOURS } from '@/lib/orders/schedule'
-import { formatRupiah } from '@/lib/orders/utils'
+import { BUSINESS, GUARANTEE } from '@/lib/public/business'
+import { getGallery, getTestimonials } from '@/lib/public/content'
+import { FAQ } from '@/lib/public/faq'
 import { getPublicProducts } from '@/lib/public/products'
-import type { PublicProduct } from '@/lib/public/types'
+import { getStoreSettings } from '@/lib/settings'
 
 export const revalidate = 60
 
-const FREE_RADIUS_KM = 25
-
-const minPrice = (list: PublicProduct[]) => (list.length > 0 ? Math.min(...list.map((p) => p.base_price)) : null)
-const perDay = (n: number | null) => (n === null ? null : `mulai ${formatRupiah(n)} / hari`)
-
-const STEPS = [
+const STEPS: DayStep[] = [
   {
-    title: 'Pilih produk dan tanggal',
-    text: 'Tambahkan AC standing, genset, atau misty fan, lalu isi tanggal acara dan jam pemakaian.',
+    when: 'H-1',
+    art: 'truck',
+    title: 'Berangkat dari Pandaan',
+    text: 'Unit dimuat ke armada kami sendiri, mobil pickup atau truk engkel, tanpa menunggu jasa angkut pihak lain.',
   },
   {
-    title: 'Hitung ongkir ke lokasi',
-    text: 'Masukkan alamat tujuan. Jarak, BBM, dan tol pulang-pergi dari Pandaan dihitung otomatis.',
+    when: 'H-1',
+    art: 'ac',
+    title: 'Dipasang sehari sebelumnya',
+    text: 'AC standing dan misty fan dipasang di lokasi sehari sebelum acara, jadi hari acara Anda tidak terganggu pemasangan.',
   },
   {
-    title: 'Lanjutkan ke WhatsApp',
-    text: 'Rincian estimasi terkirim sebagai draf pesan. Admin mengonfirmasi ketersediaan dan harga final.',
+    when: 'Hari H',
+    art: 'genset',
+    title: 'Daya menyala, udara sejuk',
+    text: `Genset dipilih sesuai jumlah AC. Standar pemakaian ${STANDARD_HOURS} jam per hari; lebih dari itu dihitung overtime per jam.`,
+  },
+  {
+    when: 'Selama acara',
+    art: 'chat',
+    title: 'Admin siaga di WhatsApp',
+    text: 'Pemilik toko sendiri yang membalas chat, cepat, termasuk saat acara sedang berjalan.',
+  },
+  {
+    when: 'Sesudah',
+    art: 'return',
+    title: 'Dibongkar dan dibawa pulang',
+    text: 'Setelah acara selesai, tim kami membongkar dan membawa unit kembali. Anda tinggal menutup acara.',
   },
 ]
 
-const FAQ = [
+const AUDIENCE = [
   {
-    q: 'Berapa kapasitas genset untuk sejumlah AC?',
-    a: 'Di halaman estimasi, centang "Gunakan Genset" dan kapasitas kVA dihitung dari jumlah AC yang Anda pilih. Kalau kebutuhannya di luar katalog, admin membantu menentukannya lewat WhatsApp.',
+    title: 'Event organizer',
+    text: 'Satu kontak untuk AC, misty fan, dan genset. Jadwal pasang H-1, dan admin bisa dihubungi selama acara.',
   },
   {
-    q: 'Apakah ongkir sudah termasuk?',
-    a: `Dalam radius ${FREE_RADIUS_KM} km dari Pandaan, ongkir gratis. Di luar radius itu ongkir dihitung dari jarak, BBM, dan tol pulang-pergi. Untuk luar kota, ongkir ditentukan admin setelah konfirmasi.`,
+    title: 'Pabrik & korporat',
+    text: 'Pendinginan sementara untuk area produksi, gudang, dan acara kantor. Pengadaan dan servis AC juga kami tangani.',
   },
   {
-    q: 'Kapan unit dipasang?',
-    a: 'Unit sewa diantar dan dipasang sehari sebelum acara, supaya hari acara Anda tidak terganggu pemasangan.',
-  },
-  {
-    q: 'Bisa ambil sendiri di toko?',
-    a: 'Pengambilan di toko hanya untuk pembelian sparepart. Semua barang sewaan diantar dan dipasang oleh tim kami.',
-  },
-  {
-    q: 'Berapa lama genset boleh dipakai per hari?',
-    a: `Standarnya ${STANDARD_HOURS} jam per hari. Pemakaian lebih dari itu dihitung sebagai overtime per jam, dibulatkan ke atas.`,
-  },
-  {
-    q: 'Apakah harga di situs ini final?',
-    a: 'Belum. Angka di situs ini estimasi untuk memberi gambaran biaya. Harga final disepakati langsung dengan admin lewat WhatsApp.',
+    title: 'Acara keluarga',
+    text: 'Pernikahan, ulang tahun, syukuran. Hitung sendiri gambaran biayanya, lalu nego langsung dengan pemilik.',
   },
 ]
 
 export default async function HomePage() {
-  const { products, error } = await getPublicProducts()
+  const [{ products, rules, error }, settings, gallery, testimonials] = await Promise.all([
+    getPublicProducts(),
+    getStoreSettings(),
+    getGallery(),
+    getTestimonials(),
+  ])
 
-  const gensets = products.filter((p) => p.capacity_kva !== null)
-  const fans = products.filter((p) => p.category === 'rental' && p.capacity_kva === null && /fan|misty/i.test(p.name))
-  const acs = products.filter((p) => p.category === 'rental' && p.capacity_kva === null && !/fan|misty/i.test(p.name))
-  const parts = products.filter((p) => p.category === 'sales')
-
-  const rentalMin = minPrice([...acs, ...fans, ...gensets])
-  const featured = products.filter((p) => p.is_featured).slice(0, 6)
-  const showcase = featured.length > 0 ? featured : [...acs, ...gensets].slice(0, 3)
-
-  const partsMin = minPrice(parts)
-  const services = [
-    { icon: Snowflake, title: 'Sewa AC standing', text: 'Pendingin untuk tenda acara, aula, dan area produksi. Disewa per hari.', price: perDay(minPrice(acs)) },
-    { icon: Zap, title: 'Sewa genset', text: 'Beberapa kapasitas kVA. Kami bantu pilih kapasitas sesuai jumlah AC dan daya lokasi.', price: perDay(minPrice(gensets)) },
-    { icon: Fan, title: 'Sewa misty fan', text: 'Kipas pengabut untuk area terbuka atau semi-terbuka.', price: perDay(minPrice(fans)) },
-    { icon: Wrench, title: 'Sparepart AC', text: 'Freon, kapasitor, kompresor, dan oli genset. Bisa diambil di toko.', price: partsMin === null ? null : `mulai ${formatRupiah(partsMin)}` },
-  ]
-
-  const facts = [
-    { value: `${FREE_RADIUS_KM} km`, label: `Radius gratis ongkir dari Pandaan` },
-    { value: `${STANDARD_HOURS} jam`, label: 'Standar pemakaian genset per hari' },
-    { value: 'H-1', label: 'Unit dipasang sehari sebelum acara' },
-    rentalMin !== null
-      ? { value: formatRupiah(rentalMin), label: 'Sewa termurah per hari' }
-      : { value: 'Pandaan', label: 'Basis armada dan gudang kami' },
-  ]
+  const featured = products.filter((p) => p.is_featured).slice(0, 3)
+  const showcase = featured.length > 0 ? featured : products.filter((p) => p.category === 'rental').slice(0, 3)
 
   return (
     <>
-      {/* ============ Hero ============ */}
-      <section className="surface-ink bg-noise">
-        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-7">
-            <h1 className="font-heading text-4xl leading-[1.05] font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Di luar 34°.
-              <br />
-              Di dalam tenda 22°.
-              <span className="mt-4 block text-xl leading-snug font-medium text-white/70 sm:text-2xl">
-                Sewa AC standing, genset, dan misty fan di Jawa Timur.
+      <JsonLd data={localBusinessLd(settings.wa_number)} />
+      <JsonLd data={faqLd(FAQ)} />
+
+      {/* ================= HERO ================= */}
+      <section className="band-night grain overflow-hidden">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pt-10 pb-16 sm:pt-14 lg:grid-cols-12 lg:gap-6 lg:pt-16 lg:pb-24">
+          <div className="lg:col-span-5">
+            <h1>
+              <span className="block font-heading text-[2.65rem] leading-[0.98] font-semibold sm:text-6xl lg:text-[4.1rem]">
+                Sejuk sebelum tamu datang.
+              </span>
+              <span className="mt-5 block max-w-md font-sans text-lg leading-snug font-normal tracking-normal text-white/75 sm:text-xl">
+                Sewa AC standing, misty fan &amp; genset untuk acara dan industri di Jawa Timur.
               </span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/75">
-              JJ Teknik di Pandaan menyewakan pendingin dan daya untuk acara dan industri. Hitung sendiri estimasi biaya
-              beserta ongkirnya, lalu lanjutkan ke WhatsApp.
-            </p>
-
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/estimasi" className={buttonVariants({ variant: 'accent', className: 'h-12 px-6 text-base' })}>
+              <Link
+                href="/estimasi"
+                className="focus-ink inline-flex h-12 items-center rounded-full bg-volt px-6 font-semibold text-volt-foreground transition-transform hover:-translate-y-0.5"
+              >
                 Hitung estimasi
               </Link>
               <Link
-                href="/katalog"
-                className="focus-ink inline-flex h-12 items-center rounded-md border border-white/25 px-6 text-base font-medium text-white transition-colors hover:bg-white/10"
+                href="/kalkulator"
+                className="focus-ink inline-flex h-12 items-center rounded-full border border-white/25 px-6 font-medium text-white transition-colors hover:bg-white/10"
               >
-                Lihat katalog
+                Butuh berapa AC?
               </Link>
             </div>
 
-            <ul className="mt-10 flex flex-wrap gap-y-3 text-sm text-white/70">
-              {[
-                { icon: Truck, text: `Gratis ongkir radius ${FREE_RADIUS_KM} km` },
-                { icon: Wrench, text: 'Diantar dan dipasang tim kami' },
-                { icon: MapPin, text: 'Pandaan, Jawa Timur' },
-              ].map(({ icon: Icon, text }, i) => (
-                <li
-                  key={text}
-                  className={`flex w-full items-center gap-2 sm:w-auto ${i > 0 ? 'sm:ml-5 sm:border-l sm:border-white/15 sm:pl-5' : ''}`}
-                >
-                  <Icon className="size-4 shrink-0 text-frost" aria-hidden="true" />
-                  {text}
-                </li>
-              ))}
+            <ul className="mt-10 grid gap-3 text-sm text-white/75">
+              <li className="flex items-center gap-3">
+                <Truck className="size-4 shrink-0 text-frost" aria-hidden="true" /> Armada sendiri: pickup &amp; truk engkel
+              </li>
+              <li className="flex items-center gap-3">
+                <Wrench className="size-4 shrink-0 text-frost" aria-hidden="true" /> Dipasang sehari sebelum acara
+              </li>
+              <li className="flex items-center gap-3">
+                <MapPin className="size-4 shrink-0 text-frost" aria-hidden="true" /> Gratis ongkir {BUSINESS.freeRadiusKm} km dari Pandaan
+              </li>
             </ul>
           </div>
 
-          <div className="lg:col-span-5">
-            <ThermalGauge />
+          <div className="lg:col-span-7">
+            <TentScene />
+            <p className="mt-3 text-center text-xs text-white/50 motion-reduce:hidden">
+              <span className="hidden sm:inline">Gerakkan kursor di dalam tenda untuk menambah panas.</span>
+              <span className="sm:hidden">Sentuh tenda untuk menambah panas.</span> AC kami yang menurunkannya lagi.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ============ Pelat spesifikasi ============ */}
-      <section aria-label="Ketentuan pokok" className="border-b bg-background">
-        <dl className="mx-auto grid max-w-6xl grid-cols-2 px-4 lg:grid-cols-4">
-          {facts.map((f, i) => (
-            <div
-              key={f.label}
-              className={`py-6 pr-4 sm:px-5 sm:py-8 ${i % 2 === 1 ? 'border-l pl-4 sm:pl-5' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i === 2 ? 'lg:border-l' : ''}`}
-            >
-              <dt className="spec text-2xl font-bold text-ink sm:text-3xl">{f.value}</dt>
-              <dd className="mt-2 max-w-[18ch] text-xs leading-relaxed text-muted-foreground sm:text-sm">{f.label}</dd>
+      {/* ================= UNTUK SIAPA ================= */}
+      <section aria-labelledby="untuk" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+        <h2 id="untuk" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+          Untuk acara yang tidak boleh gerah.
+        </h2>
+        <div className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-0">
+          {AUDIENCE.map((a, i) => (
+            <div key={a.title} className={i > 0 ? 'sm:border-l sm:pl-8' : 'sm:pr-8'}>
+              <h3 className="font-heading text-lg font-semibold">{a.title}</h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{a.text}</p>
             </div>
           ))}
-        </dl>
-      </section>
-
-      {/* ============ Layanan ============ */}
-      <section aria-labelledby="layanan" className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <div className="max-w-2xl">
-          <h2 id="layanan" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            Empat hal yang kami kerjakan
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Semua barang sewa dihitung per hari. Sparepart dijual satuan dan bisa diambil langsung di toko.
-          </p>
         </div>
-
-        <ul className="mt-10 border-t">
-          {services.map(({ icon: Icon, title, text, price }) => (
-            <li key={title} className="group flex flex-col gap-3 border-b py-6 sm:flex-row sm:items-center sm:gap-6">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-primary transition-colors group-hover:bg-secondary">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <div className="flex-1">
-                <h3 className="font-heading text-lg font-semibold">{title}</h3>
-                <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">{text}</p>
-              </div>
-              {price && <p className="tnum shrink-0 text-sm font-semibold text-ink sm:text-right">{price}</p>}
-            </li>
-          ))}
-        </ul>
-
-        {error && (
-          <p role="alert" className="mt-6 text-sm text-destructive">
-            Harga belum dapat dimuat. Muat ulang halaman ini beberapa saat lagi.
-          </p>
-        )}
       </section>
 
-      {/* ============ Unggulan ============ */}
+      {/* ================= JAM HARI-H ================= */}
+      <section aria-labelledby="hari" className="band-night grain">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+          <h2 id="hari" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+            Satu acara, dari <span className="whitespace-nowrap">H-1</span> sampai bongkar.
+          </h2>
+          <p className="mt-4 max-w-lg text-white/70">Begini kerja tim kami untuk setiap pesanan sewa.</p>
+          <div className="mt-14">
+            <DayTimeline steps={STEPS} />
+          </div>
+        </div>
+      </section>
+
+      {/* ================= GARANSI ================= */}
+      <section aria-labelledby="garansi" className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+        <div className="grid items-center gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <GuaranteeStamp />
+          </div>
+          <div className="lg:col-span-7">
+            <h2 id="garansi" className="font-heading text-3xl font-semibold sm:text-5xl sm:leading-[1.05]">
+              {GUARANTEE.headline}
+            </h2>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">{GUARANTEE.body}</p>
+            <p className="mt-4 text-sm text-muted-foreground">{GUARANTEE.terms}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= PRODUK ================= */}
       {showcase.length > 0 && (
-        <section aria-labelledby="unggulan" className="surface-warm border-y">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="max-w-xl">
-                <h2 id="unggulan" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-                  Paling sering disewa
-                </h2>
-                <p className="mt-3 text-muted-foreground">
-                  Tambahkan ke keranjang, lalu lanjutkan ke halaman estimasi untuk menghitung total dan ongkir.
-                </p>
-              </div>
-              <Link href="/katalog" className={buttonVariants({ variant: 'outline', className: 'h-11 px-5' })}>
+        <section aria-labelledby="produk" className="border-y bg-muted/60">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+            <div className="flex flex-wrap items-end justify-between gap-5">
+              <h2 id="produk" className="max-w-xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+                Yang paling sering kami antar.
+              </h2>
+              <Link
+                href="/katalog"
+                className="focus-ink inline-flex h-11 items-center rounded-full border border-input bg-card px-5 text-sm font-medium hover:bg-muted"
+              >
                 Lihat seluruh katalog
               </Link>
             </div>
-
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {showcase.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
@@ -215,66 +200,62 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+      {error && (
+        <p role="alert" className="mx-auto max-w-6xl px-4 py-6 text-sm text-destructive">
+          Katalog belum dapat dimuat. Muat ulang halaman ini beberapa saat lagi.
+        </p>
+      )}
 
-      {/* ============ Cara pemesanan (urutan, jadi penomoran memang relevan) ============ */}
-      <section aria-labelledby="cara" className="surface-ink bg-noise">
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <h2 id="cara" className="font-heading max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
-            Tiga langkah, tanpa daftar akun
+      {/* ================= KALKULATOR ================= */}
+      <section aria-labelledby="hitung" className="band-night grain">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+          <h2 id="hitung" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+            Butuh berapa AC?
           </h2>
-
-          <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-6">
-            {STEPS.map((s, i) => (
-              <li key={s.title} className="relative sm:pr-6">
-                <div className="flex items-center gap-4">
-                  <span className="spec text-5xl font-bold text-frost">{i + 1}</span>
-                  <span className="hidden h-px flex-1 bg-white/15 sm:block" aria-hidden="true" />
-                </div>
-                <h3 className="mt-5 font-heading text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{s.text}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-14 flex flex-wrap items-center gap-4">
-            <Link href="/estimasi" className={buttonVariants({ variant: 'accent', className: 'h-12 px-6 text-base' })}>
-              Mulai hitung estimasi
-            </Link>
-            <p className="text-sm text-white/60">Gratis, hasilnya langsung terlihat.</p>
+          <p className="mt-4 max-w-lg text-white/70">Geser sesuai acara Anda. Hasilnya langsung berubah.</p>
+          <div className="mt-12">
+            <NeedsCalculator rules={rules} waNumber={settings.wa_number} />
           </div>
         </div>
       </section>
 
-      {/* ============ FAQ ============ */}
-      <section aria-labelledby="faq" className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+      {/* ================= TESTIMONI & GALERI (tampil hanya bila sudah ada isinya) ================= */}
+      {testimonials.length > 0 && (
+        <section aria-labelledby="testi" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+          <h2 id="testi" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
+            Kata mereka.
+          </h2>
+          <div className="mt-10">
+            <TestimonialList items={testimonials.slice(0, 3)} />
+          </div>
+        </section>
+      )}
+      {gallery.length > 0 && (
+        <section aria-labelledby="galeri" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <h2 id="galeri" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
+              Dari lapangan.
+            </h2>
+            <Link href="/galeri" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+              Lihat galeri
+            </Link>
+          </div>
+          <div className="mt-10">
+            <GalleryGrid items={gallery.slice(0, 6)} />
+          </div>
+        </section>
+      )}
+
+      {/* ================= FAQ ================= */}
+      <section aria-labelledby="faq" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <h2 id="faq" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-              Pertanyaan yang sering masuk
+            <h2 id="faq" className="font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+              Yang sering ditanyakan.
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Belum terjawab? Kirim pertanyaan lewat tombol WhatsApp di atas, biasanya dibalas pada jam kerja.
-            </p>
           </div>
-
           <div className="lg:col-span-8">
-            <div className="border-t">
-              {FAQ.map((f) => (
-                <details key={f.q} className="group border-b">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left">
-                    <h3 className="font-heading text-base font-semibold">{f.q}</h3>
-                    <span
-                      className="relative size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-45"
-                      aria-hidden="true"
-                    >
-                      <span className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-current" />
-                      <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-current" />
-                    </span>
-                  </summary>
-                  <p className="max-w-2xl pb-5 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
-                </details>
-              ))}
-            </div>
+            <FaqList items={FAQ} />
           </div>
         </div>
       </section>
