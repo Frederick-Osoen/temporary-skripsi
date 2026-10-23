@@ -8,7 +8,7 @@ import { EVENT_TYPE_LABEL, type EventType, type GalleryItem } from '@/lib/public
 import { productImageUrl } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 
-// Foto galeri disimpan di bucket yang sama dengan foto produk (folder berbeda) sampai admin galeri dibuat.
+// Foto galeri memakai bucket yang sama dengan foto produk (folder gallery/).
 const src = (p: string) => productImageUrl(p) ?? ''
 
 export function GalleryGrid({ items, filterable = false }: { items: GalleryItem[]; filterable?: boolean }) {

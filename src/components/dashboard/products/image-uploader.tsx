@@ -32,10 +32,16 @@ export function ImageUploader({
   value,
   onChange,
   onBusyChange,
+  folder = 'products',
+  alt = 'Foto produk',
+  hint = 'Foto otomatis diperkecil ke WebP. Kosongkan untuk memakai placeholder abu-abu.',
 }: {
   value: string | null
   onChange: (path: string | null) => void
   onBusyChange?: (busy: boolean) => void // dipakai form untuk menonaktifkan tombol Simpan saat upload
+  folder?: string
+  alt?: string
+  hint?: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -55,7 +61,7 @@ export function ImageUploader({
     onBusyChange?.(true)
     try {
       const blob = await compressToWebp(file)
-      const path = `products/${crypto.randomUUID()}.webp`
+      const path = `${folder}/${crypto.randomUUID()}.webp`
       const supabase = createClient()
       const { error: uploadError } = await supabase.storage
         .from(PRODUCT_IMAGE_BUCKET)
@@ -76,7 +82,7 @@ export function ImageUploader({
       <div className="flex items-center gap-3">
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted">
           {url ? (
-            <Image src={url} alt="Foto produk" fill sizes="80px" className="object-cover" />
+            <Image src={url} alt={alt} fill sizes="80px" className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               <ImagePlus className="h-6 w-6" />
@@ -95,7 +101,7 @@ export function ImageUploader({
         </div>
       </div>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handlePick} />
-      <p className="text-xs text-muted-foreground">Foto otomatis diperkecil ke WebP. Kosongkan untuk memakai placeholder abu-abu.</p>
+      <p className="text-xs text-muted-foreground">{hint}</p>
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </div>
   )
