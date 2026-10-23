@@ -2,6 +2,7 @@ import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { getStoreSettings } from '@/lib/settings'
 // import { Fuel } from 'lucide-react'
 
 export const runtime = 'nodejs'
@@ -26,6 +27,15 @@ const FLEET = {
   // truck: { label:'Truck', fuelRatePerKm: 3750, tollMultiplier: TRUCK_TOLL_MULTIPLIER },
 } as const
 type FleetType = keyof typeof FLEET
+type FleetCfg = Record<FleetType, { label: string; fuelRatePerKm: number; tollMultiplier: number }>
+
+// Tarif BBM dari Pengaturan Toko (fallback ke nilai bawaan di atas)
+function fleetWithRates(rates: { fuel_rate_pickup: number; fuel_rate_truck: number }): FleetCfg {
+  return {
+    pickup: { ...FLEET.pickup, fuelRatePerKm: rates.fuel_rate_pickup },
+    truck: { ...FLEET.truck, fuelRatePerKm: rates.fuel_rate_truck },
+  }
+}
 
 const LIMIT_ALL = { max: 20, windowSec: 60 }
 const LIMIT_MISS = { max: 15, windowSec: 3600 }
@@ -177,8 +187,8 @@ function resolveToll(tollOneWayRaw: number, distanceKm: number): { oneWay: numbe
   return { oneWay: 0, source: 'unavailable' }
 }
 
-function calculate(distanceKm: number, tollOneWayRaw: number, fleet: FleetType) {
-  const cfg = FLEET[fleet]
+function calculate(distanceKm: number, tollOneWayRaw: number, fleet: FleetType, fl: FleetCfg) {
+  const cfg = fl[fleet]
 
   // zona 1 = Gratis
   if (distanceKm <= ZONE1_MAX_KM) {
@@ -230,12 +240,12 @@ function calculate(distanceKm: number, tollOneWayRaw: number, fleet: FleetType) 
   }
 }
 
-function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetType, cached: boolean) {
-  const r = calculate(distanceKm, tollOneWayRaw, fleet)
-  const cfg = FLEET[fleet]
+function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetType, cached: boolean, fl: FleetCfg) {
+  const r = calculate(distanceKm, tollOneWayRaw, fleet, fl)
+  const cfg = fl[fleet]
 
   const perFleet = (f: FleetType) => {
-  const x = calculate(distanceKm, tollOneWayRaw, f)
+  const x = calculate(distanceKm, tollOneWayRaw, f, fl)
   return { fuel_fee: x.fuel_fee, toll_fee: x.toll_fee, shipping_fee: x.zone === 3 ? null : x.shipping_fee }
 }
 
@@ -299,6 +309,7 @@ async function handle(request: Request) {
     const wait = await checkRateLimit(supabase, 'distance', ip, LIMIT_ALL.max, LIMIT_ALL.windowSec)
     if (wait > 0) return tooMany(wait)
 
+    const fl = fleetWithRates(await getStoreSettings())
     const key = normalizeKey(destination)
     const { data: cached, error: cacheError } = await supabase
       .from('route_cache')
@@ -308,7 +319,7 @@ async function handle(request: Request) {
 
     if (cacheError) console.error('[distance] gagal baca cache:', cacheError)
     else if (cached) {
-      return buildResponse(Number(cached.distance_km), Number(cached.toll_fee ?? 0), fleet_type, true)
+      return buildResponse(Number(cached.distance_km), Number(cached.toll_fee ?? 0), fleet_type, true, fl)
     }
 
     const waitMiss = await checkRateLimit(supabase, 'distance-miss', ip, LIMIT_MISS.max, LIMIT_MISS.windowSec)
@@ -322,7 +333,7 @@ async function handle(request: Request) {
       .upsert({ destination_key: key, distance_km: distanceKm, toll_fee: tollOneWay }, { onConflict: 'destination_key' })
     if (upsertError) console.error('[distance] gagal simpan cache:', upsertError)
 
-    return buildResponse(distanceKm, tollOneWay, fleet_type, false)
+    return buildResponse(distanceKm, tollOneWay, fleet_type, false, fl)
   } catch (err) {
     if (err instanceof RouteError && err.kind === 'not_found') {
       return NextResponse.json(

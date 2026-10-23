@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-jakarta), var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-frost: var(--frost);
+  --color-volt: var(--volt);
+  --color-volt-foreground: var(--volt-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --shadow-soft: 0 1px 2px rgb(11 27 51 / 0.06), 0 8px 24px -8px rgb(11 27 51 / 0.12);
+  --shadow-glow: 0 0 0 1px rgb(34 211 238 / 0.25), 0 10px 40px -10px rgb(14 116 144 / 0.5);
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,73 +58,88 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* =====================================================================
+   TOKEN DESAIN JJ TEKNIK  ("dingin dan bertenaga")
+   Ubah warna/radius DI SINI SAJA: admin dan publik ikut berubah.
+   Panduan lengkap: DESIGN.md
+   ===================================================================== */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Merek */
+  --ink: #0b1b33;              /* navy: heading, latar gelap */
+  --frost: #22d3ee;            /* cyan: sisi 'dingin' skala termal */
+  --volt: #f59e0b;             /* amber: CTA utama, genset */
+  --volt-foreground: #1f1300;
+  --success: #15803d;
+  --warning: #b45309;
+
+  /* Permukaan & teks */
+  --background: #ffffff;
+  --foreground: #0b1b33;
+  --card: #ffffff;
+  --card-foreground: #0b1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0b1b33;
+
+  /* Primary "Frost" (cyan-teal), kontras 5.4:1 di atas putih */
+  --primary: #0e7490;
+  --primary-foreground: #ffffff;
+  --secondary: #e4f1f7;
+  --secondary-foreground: #0b3b52;
+  --muted: #f1f6fa;
+  --muted-foreground: #52667a;
+  --accent: #e0f0f6;
+  --accent-foreground: #0b3b52;
+  --destructive: #dc2626;
+  --border: #d9e4ec;
+  --input: #cbd9e3;
+  --ring: #22a6c4;
+
+  --chart-1: #0e7490;
+  --chart-2: #f59e0b;
+  --chart-3: #0b1b33;
+  --chart-4: #22d3ee;
+  --chart-5: #64748b;
+  --radius: 0.75rem;
+
+  --sidebar: #0b1b33;
+  --sidebar-foreground: #d6e4f0;
+  --sidebar-primary: #22d3ee;
+  --sidebar-primary-foreground: #0b1b33;
+  --sidebar-accent: #15305a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c3358;
+  --sidebar-ring: #22d3ee;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ink: #e6f0f8;
+  --frost: #67e8f9;
+  --background: #08111f;
+  --foreground: #e6f0f8;
+  --card: #0d1b30;
+  --card-foreground: #e6f0f8;
+  --popover: #0d1b30;
+  --popover-foreground: #e6f0f8;
+  --primary: #22d3ee;
+  --primary-foreground: #06202b;
+  --secondary: #15305a;
+  --secondary-foreground: #e6f0f8;
+  --muted: #11233d;
+  --muted-foreground: #9db3c7;
+  --accent: #15305a;
+  --accent-foreground: #e6f0f8;
+  --destructive: #f87171;
+  --border: #1c3358;
+  --input: #234068;
+  --ring: #22d3ee;
+  --sidebar: #060d19;
+  --sidebar-foreground: #d6e4f0;
+  --sidebar-primary: #22d3ee;
+  --sidebar-primary-foreground: #06202b;
+  --sidebar-accent: #15305a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c3358;
+  --sidebar-ring: #22d3ee;
 }
 
 @layer base {
@@ -126,5 +151,220 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
   }
 }
+
+/* =====================================================================
+   UTILITAS DESAIN (CSS murni: hanya transform/opacity, tanpa JS)
+   ===================================================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@layer utilities {
+  /* Latar hero: navy -> teal + cahaya cyan */
+  .bg-hero {
+    background:
+      radial-gradient(60rem 28rem at 85% -10%, rgb(34 211 238 / 0.28), transparent 60%),
+      radial-gradient(40rem 24rem at 0% 110%, rgb(245 158 11 / 0.16), transparent 60%),
+      linear-gradient(135deg, #0b1b33 0%, #0d3550 58%, #0e7490 130%);
+    color: #fff;
+  }
+  /* Teks gradasi untuk kata kunci pada heading */
+  .text-gradient {
+    background: linear-gradient(90deg, #22d3ee, #f59e0b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Kartu yang terangkat halus saat hover/fokus */
+  .card-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card-lift:hover,
+  .card-lift:focus-within {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+  }
+  /* Skeleton loading (perceived latency) */
+  .skeleton {
+    background: linear-gradient(90deg, var(--muted) 25%, #e4edf4 37%, var(--muted) 63%);
+    background-size: 400% 100%;
+    animation: var(--animate-shimmer);
+    border-radius: var(--radius-md);
+  }
+  .animate-float {
+    animation: var(--animate-float);
+  }
+}
+
+/* Hormati pengguna yang mematikan animasi di perangkatnya */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =====================================================================
+   FASE 6F — TAMPILAN PUBLIK
+   Konsep "dari panas ke dingin": amber (--volt) = panas/daya,
+   cyan (--frost) = dingin. Semua warna tetap dari token di atas.
+   ===================================================================== */
+
+/* Satu momen animasi: skala termal menyala saat halaman dibuka */
+@keyframes thermal-reveal {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes thermal-drop {
+  from { transform: translateY(0); opacity: 0; }
+  20%  { opacity: 1; }
+  to   { transform: translateY(var(--drop, 268px)); opacity: 1; }
+}
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+@layer utilities {
+  /* -------- Permukaan -------- */
+
+  /* Band gelap: navy dengan cahaya cyan di kanan atas dan amber di kiri bawah */
+  .surface-ink {
+    background:
+      radial-gradient(52rem 26rem at 88% -8%, color-mix(in oklab, var(--frost) 22%, transparent), transparent 62%),
+      radial-gradient(38rem 22rem at -6% 108%, color-mix(in oklab, var(--volt) 14%, transparent), transparent 60%),
+      var(--ink);
+    color: #fff;
+  }
+  /* Band terang bernuansa hangat: sisi "panas" dari cerita */
+  .surface-warm {
+    background:
+      radial-gradient(40rem 20rem at 100% 0%, color-mix(in oklab, var(--volt) 10%, transparent), transparent 65%),
+      var(--muted);
+  }
+  /* Tekstur halus supaya band gelap tidak terasa rata seperti plastik */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  /* Panel instrumen: dipakai di estimator dan kartu di band gelap */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+  }
+  .panel-ink {
+    background: color-mix(in oklab, #fff 7%, transparent);
+    border: 1px solid color-mix(in oklab, #fff 14%, transparent);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Garis tipis bergradasi: penanda batas seksi, bukan hiasan */
+  .rule-thermal {
+    height: 1px;
+    background: linear-gradient(90deg, var(--volt), var(--frost) 55%, transparent);
+  }
+
+  /* -------- Angka sebagai konten -------- */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.02em;
+  }
+  .spec {
+    font-family: var(--font-heading);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+
+  /* -------- Skala termal (hero) -------- */
+  .thermal {
+    --drop: 268px;
+    position: relative;
+    width: 2.75rem;
+    height: 19rem;
+  }
+  .thermal__bar {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(
+      180deg,
+      var(--volt) 0%,
+      color-mix(in oklab, var(--volt), var(--frost) 45%) 42%,
+      color-mix(in oklab, var(--volt), var(--frost) 80%) 70%,
+      var(--frost) 100%
+    );
+    /* Dipotong jadi segmen seperti bar alat ukur */
+    mask-image: repeating-linear-gradient(180deg, #000 0 12px, transparent 12px 17px);
+    animation: thermal-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .thermal__glow {
+    position: absolute;
+    inset: -14% -140%;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--frost) 28%, transparent), transparent 70%);
+    animation: glow-pulse 5s ease-in-out infinite;
+    animation-delay: 900ms;
+  }
+  .thermal__marker {
+    position: absolute;
+    left: -0.5rem;
+    right: -0.5rem;
+    top: 0.75rem;
+    height: 2px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 40%, transparent);
+    animation: thermal-drop 1100ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  }
+
+  /* Masuk sekali, dipakai hemat (hanya elemen kunci di bawah lipatan) */
+  .animate-rise {
+    animation: rise 420ms ease-out both;
+  }
+
+  /* Baris produk/katalog yang bisa digeser di layar kecil */
+  .rail {
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { scroll-snap-align: start; }
+
+  /* Fokus yang jelas di atas band gelap */
+  .focus-ink:focus-visible {
+    outline: 2px solid var(--frost);
+    outline-offset: 2px;
+  }
+}
+

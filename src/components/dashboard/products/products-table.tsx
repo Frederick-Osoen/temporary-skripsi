@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Eye, EyeOff, Pencil, Plus, Star, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
 import { ProductForm } from './product-form'
-import { deleteProduct } from '@/app/dashboard/products/actions'
+import { deleteProduct, setProductVisibility } from '@/app/dashboard/products/actions'
 import { safeAction } from '@/lib/action-client'
 import type { Product } from '@/lib/validations/product'
 
@@ -40,6 +40,20 @@ export function ProductsTable({ products }: { products: Product[] }) {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletePending, startDelete] = useTransition()
 
+  const [visibilityError, setVisibilityError] = useState<string | null>(null)
+  const [visibilityPendingId, setVisibilityPendingId] = useState<string | null>(null)
+  const [, startVisibility] = useTransition()
+
+  function toggleVisibility(p: Product) {
+    setVisibilityError(null)
+    setVisibilityPendingId(p.id)
+    startVisibility(async () => {
+      const res = await safeAction(() => setProductVisibility(p.id, !p.is_public))
+      if (!res.ok) setVisibilityError(res.error)
+      setVisibilityPendingId(null)
+    })
+  }
+
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
       {
@@ -48,6 +62,17 @@ export function ProductsTable({ products }: { products: Product[] }) {
           <Button variant="ghost" className="-ml-3" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
             Nama <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
+        ),
+        cell: ({ row }) => (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={row.original.is_public ? '' : 'text-muted-foreground'}>{row.original.name}</span>
+            {row.original.capacity_kva !== null && (
+              <Badge variant="outline" className="gap-0.5"><Zap className="h-3 w-3" />{row.original.capacity_kva} kVA</Badge>
+            )}
+            {row.original.is_featured && (
+              <Star className="h-3.5 w-3.5 fill-volt text-volt" aria-label="Produk unggulan" />
+            )}
+          </div>
         ),
       },
       {
@@ -71,6 +96,27 @@ export function ProductsTable({ products }: { products: Product[] }) {
       },
       { accessorKey: 'total_stock', header: 'Stok' },
       {
+        accessorKey: 'is_public',
+        header: 'Katalog',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const p = row.original
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={visibilityPendingId === p.id}
+              aria-label={p.is_public ? `Sembunyikan ${p.name} dari katalog` : `Tampilkan ${p.name} di katalog`}
+              onClick={() => toggleVisibility(p)}
+              className={p.is_public ? 'text-success' : 'text-muted-foreground'}
+            >
+              {p.is_public ? <Eye className="mr-1.5 h-4 w-4" /> : <EyeOff className="mr-1.5 h-4 w-4" />}
+              {p.is_public ? 'Tampil' : 'Tersembunyi'}
+            </Button>
+          )
+        },
+      },
+      {
         id: 'actions',
         header: () => <span className="sr-only">Aksi</span>,
         cell: ({ row }) => (
@@ -91,7 +137,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
         ),
       },
     ],
-    []
+    [visibilityPendingId]
   )
 
   const table = useReactTable({
@@ -142,6 +188,10 @@ export function ProductsTable({ products }: { products: Product[] }) {
           <Plus className="mr-2 h-4 w-4" /> Tambah Produk
         </Button>
       </div>
+
+      {visibilityError && (
+        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{visibilityError}</p>
+      )}
 
       <div className="overflow-x-auto rounded-lg border bg-background">
         <Table>

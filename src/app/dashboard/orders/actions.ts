@@ -184,10 +184,12 @@ export async function findCustomerByPhone(phoneInput: string): Promise<ActionDat
 
 export async function createOrder(
   input: unknown,
-  requestId: string
+  requestId: string,
+  leadId?: string // opsional: pesanan ini berasal dari lead di halaman Leads
 ): Promise<ActionData<{ id: string; code: string; duplicate: boolean }>> {
   return guard(async () => {
     if (!z.string().uuid().safeParse(requestId).success) return fail('Permintaan tidak valid')
+    if (leadId !== undefined && !z.string().uuid().safeParse(leadId).success) return fail('Lead tidak valid')
 
     const parsed = orderFormSchema.safeParse(input)
     if (!parsed.success) return fail(parsed.error.issues[0].message)
@@ -215,6 +217,17 @@ export async function createOrder(
 
     const result = data as { order_id: string; order_code: string; duplicate?: boolean } | null
     if (!result) return fail('Gagal menyimpan pesanan')
+
+    // Tandai lead sudah dijadikan pesanan. Best-effort: pesanan sudah tersimpan, jadi kegagalan di sini hanya dicatat.
+    if (leadId && !result.duplicate) {
+      const { error: leadError } = await ctx.supabase
+        .from('leads')
+        .update({ status: 'converted', converted_order_id: result.order_id })
+        .eq('id', leadId)
+        .neq('status', 'converted')
+      if (leadError) console.error('[orders] gagal menandai lead converted:', leadError)
+      revalidatePath('/dashboard/leads')
+    }
 
     revalidatePath('/dashboard/orders')
     return { ok: true, data: { id: result.order_id, code: result.order_code, duplicate: !!result.duplicate } }

@@ -14,6 +14,7 @@ import type { AdminRole } from '@/lib/auth'
 import type { HistoryRow, OrderDetailData } from '@/lib/orders/detail'
 import type { AllocationData } from '@/lib/orders/allocation'
 import type { ScheduleRow } from '@/lib/orders/schedule'
+import { buildConfirmationMessage } from '@/lib/orders/confirmation'
 import { AllocationSection } from './allocation-section'
 import { ExtendDialog } from './extend-dialog'
 import { OrderHistory } from './order-history'
@@ -68,6 +69,7 @@ export function OrderDetail({
   const currentIdx = flow.indexOf(order.status)
   const itemsTotal = order.items.reduce((s, i) => s + i.subtotal, 0)
   const pay = summarizePayments(order.total_amount, payments)
+  const confirmUrl = buildConfirmationMessage(order, payments).url
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.destination)}`
 
   const rentalItems = order.items.filter((i) => i.category === 'rental')
@@ -89,6 +91,11 @@ export function OrderDetail({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.status} />
+          {order.status !== 'cancelled' && (
+            <a href={confirmUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              <MessageCircle className="mr-2 h-4 w-4" /> Kirim Konfirmasi WA
+            </a>
+          )}
           {!locked && order.hasRental && order.status !== 'waiting_payment' && (
             <Button type="button" variant="outline" size="sm" onClick={() => setExtendOpen(true)}>
               <CalendarPlus className="mr-2 h-4 w-4" /> Perpanjang Sewa
