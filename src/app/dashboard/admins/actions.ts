@@ -56,7 +56,7 @@ export async function createAdmin(input: unknown): Promise<Result> {
       return { ok: false, error: dup ? 'Email sudah terdaftar.' : `Gagal membuat akun: ${error?.message ?? 'tidak ada respons'}` }
     }
 
-    const { error: insErr } = await db.from('admins').insert({ id: created.user.id, name: parsed.data.name, role: 'admin' })
+    const { error: insErr } = await db.from('admins').insert({ id: created.user.id, name: parsed.data.name, email: parsed.data.email, role: 'admin' })
     if (insErr) {
       console.error('[admins] insert admins:', insErr)
       await db.auth.admin.deleteUser(created.user.id) // jangan tinggalkan akun tanpa profil
