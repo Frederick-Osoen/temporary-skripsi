@@ -7,6 +7,10 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['undici'],
+  async headers() {
+    // sw.js tidak boleh di-cache lama agar pembaruan service worker sampai ke pengguna
+    return [{ source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }] }]
+  },
   images: {
     // Jaringan IPv6/DNS64 (NAT64) membuat host Supabase terbaca sebagai IP privat saat pengembangan.
     // Aman: hanya host Supabase di remotePatterns yang boleh dimuat. Produksi tetap ketat.
