@@ -52,14 +52,15 @@ export async function createAdmin(input: unknown): Promise<Result> {
     if (error || !created.user) {
       const dup = error?.message?.toLowerCase().includes('already')
       if (!dup) console.error('[admins] createUser:', error)
-      return { ok: false, error: dup ? 'Email sudah terdaftar.' : 'Gagal membuat akun.' }
+      // Halaman ini khusus owner, jadi alasan dari Supabase aman ditampilkan untuk memudahkan diagnosis
+      return { ok: false, error: dup ? 'Email sudah terdaftar.' : `Gagal membuat akun: ${error?.message ?? 'tidak ada respons'}` }
     }
 
     const { error: insErr } = await db.from('admins').insert({ id: created.user.id, name: parsed.data.name, role: 'admin' })
     if (insErr) {
       console.error('[admins] insert admins:', insErr)
       await db.auth.admin.deleteUser(created.user.id) // jangan tinggalkan akun tanpa profil
-      return { ok: false, error: 'Gagal menyimpan profil admin.' }
+      return { ok: false, error: `Gagal menyimpan profil admin: ${insErr.message}` }
     }
     revalidatePath('/dashboard/admins')
     return { ok: true }
@@ -75,7 +76,7 @@ export async function setAdminActive(targetId: string, active: boolean): Promise
     const { error } = await t.db.auth.admin.updateUserById(targetId, { ban_duration: active ? 'none' : BAN_FOREVER })
     if (error) {
       console.error('[admins] ban:', error)
-      return { ok: false, error: 'Gagal mengubah status akun.' }
+      return { ok: false, error: `Gagal mengubah status akun: ${error.message}` }
     }
     revalidatePath('/dashboard/admins')
     return { ok: true }
