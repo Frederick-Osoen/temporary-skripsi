@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notifyNewLead } from '@/lib/notify/events'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
@@ -82,5 +83,6 @@ export async function POST(request: Request) {
     console.error('[leads] insert gagal:', error)
     return NextResponse.json({ ok: false }, { status: 500 })
   }
+  after(() => notifyNewLead({ customer_name: customer_name || 'Tanpa nama', total_estimate, payload }).then(() => undefined).catch((e) => console.error('[leads] email gagal:', e)))
   return ok()
 }
