@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-jakarta), var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -41,6 +41,10 @@
   --color-card: var(--card);
   --color-ink: var(--ink);
   --color-frost: var(--frost);
+  --color-ink-2: var(--ink-2);
+  --color-garansi: var(--garansi);
+  --color-wa: var(--wa);
+  --shadow-float: 0 14px 40px -14px rgb(7 15 31 / 0.55);
   --color-volt: var(--volt);
   --color-volt-foreground: var(--volt-foreground);
   --color-success: var(--success);
@@ -66,6 +70,9 @@
 :root {
   /* Merek */
   --ink: #0b1b33;              /* navy: heading, latar gelap */
+  --ink-2: #15305a;
+  --garansi: #c62a1f;
+  --wa: #15803d;
   --frost: #22d3ee;            /* cyan: sisi 'dingin' skala termal */
   --volt: #f59e0b;             /* amber: CTA utama, genset */
   --volt-foreground: #1f1300;
@@ -219,152 +226,169 @@
 }
 
 /* =====================================================================
-   FASE 6F — TAMPILAN PUBLIK
-   Konsep "dari panas ke dingin": amber (--volt) = panas/daya,
-   cyan (--frost) = dingin. Semua warna tetap dari token di atas.
+   SITUS PUBLIK: "Malam Acara, Arus Dingin"
+   Semua token publik di-scope ke .theme-public (dipasang di
+   app/(public)/layout.tsx), jadi dashboard admin tidak ikut berubah.
+   Amber (--volt) = panas & lampu/daya. Cyan (--frost) = udara dingin.
+   Navy (--ink) = malam acara. Merah (--garansi) HANYA untuk garansi.
    ===================================================================== */
+.theme-public {
+  --background: #f5fafc;           /* Es */
+  --foreground: #08162a;
+  --card: #ffffff;
+  --card-foreground: #08162a;
+  --popover: #ffffff;
+  --popover-foreground: #08162a;
+  --primary: #0a7894;              /* cyan gelap: 5:1 di atas putih */
+  --primary-foreground: #ffffff;
+  --secondary: #dff1f7;
+  --secondary-foreground: #0a3a4e;
+  --muted: #e8f3f7;
+  --muted-foreground: #4b5d70;
+  --accent: #dff1f7;
+  --accent-foreground: #0a3a4e;
+  --border: #d3e3ea;
+  --input: #c2d6df;
+  --ring: #12a9c9;
+  --ink: #070f1f;                  /* Navy Panggung */
+  --ink-2: #12305a;                /* Biru Senja */
+  --frost: #5ee7f7;                /* Cyan Udara, untuk di atas latar gelap */
+  --volt: #ffb547;                 /* Amber Lampu */
+  --volt-foreground: #241500;
+  --garansi: #c62a1f;              /* 5.6:1 di atas putih */
+  --radius: 0.875rem;
 
-/* Satu momen animasi: skala termal menyala saat halaman dibuka */
-@keyframes thermal-reveal {
-  from { clip-path: inset(0 0 100% 0); }
-  to   { clip-path: inset(0 0 0 0); }
+  --font-sans: var(--font-geologica), ui-sans-serif, system-ui, sans-serif;
+  --font-jakarta: var(--font-unbounded);
+  --font-heading: var(--font-unbounded), var(--font-geologica), ui-sans-serif, sans-serif;
+
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
 }
-@keyframes thermal-drop {
-  from { transform: translateY(0); opacity: 0; }
-  20%  { opacity: 1; }
-  to   { transform: translateY(var(--drop, 268px)); opacity: 1; }
+
+@layer base {
+  .theme-public h1,
+  .theme-public h2,
+  .theme-public h3 {
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .theme-public p {
+    text-wrap: pretty;
+  }
 }
-@keyframes rise {
-  from { transform: translateY(14px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+
+@keyframes lamp-on {
+  0% { opacity: 0.15; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
 }
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 1; }
+@keyframes stamp-press {
+  0% { opacity: 0; transform: scale(1.6) rotate(-14deg); }
+  70% { opacity: 1; transform: scale(0.94) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-8deg); }
+}
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
 }
 
 @layer utilities {
-  /* -------- Permukaan -------- */
-
-  /* Band gelap: navy dengan cahaya cyan di kanan atas dan amber di kiri bawah */
-  .surface-ink {
+  /* Band malam: navy dengan cahaya lampu amber di atas dan udara cyan di bawah */
+  .band-night {
     background:
-      radial-gradient(52rem 26rem at 88% -8%, color-mix(in oklab, var(--frost) 22%, transparent), transparent 62%),
-      radial-gradient(38rem 22rem at -6% 108%, color-mix(in oklab, var(--volt) 14%, transparent), transparent 60%),
-      var(--ink);
+      radial-gradient(70rem 30rem at 70% -12%, color-mix(in oklab, var(--volt) 16%, transparent), transparent 60%),
+      radial-gradient(50rem 26rem at 10% 115%, color-mix(in oklab, var(--frost) 14%, transparent), transparent 62%),
+      linear-gradient(180deg, var(--ink) 0%, color-mix(in oklab, var(--ink), var(--ink-2) 45%) 100%);
     color: #fff;
   }
-  /* Band terang bernuansa hangat: sisi "panas" dari cerita */
-  .surface-warm {
-    background:
-      radial-gradient(40rem 20rem at 100% 0%, color-mix(in oklab, var(--volt) 10%, transparent), transparent 65%),
-      var(--muted);
-  }
-  /* Tekstur halus supaya band gelap tidak terasa rata seperti plastik */
-  .bg-noise {
-    position: relative;
-  }
-  .bg-noise::after {
+  /* Tekstur halus supaya navy tidak terasa plastik */
+  .grain { position: relative; isolation: isolate; }
+  .grain::after {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: -1;
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0.35;
     mix-blend-mode: soft-light;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   }
 
-  /* Panel instrumen: dipakai di estimator dan kartu di band gelap */
   .panel {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
   }
-  .panel-ink {
-    background: color-mix(in oklab, #fff 7%, transparent);
-    border: 1px solid color-mix(in oklab, #fff 14%, transparent);
+  .panel-night {
+    background: color-mix(in oklab, #fff 6%, transparent);
+    border: 1px solid color-mix(in oklab, #fff 13%, transparent);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(8px);
   }
 
-  /* Garis tipis bergradasi: penanda batas seksi, bukan hiasan */
-  .rule-thermal {
-    height: 1px;
-    background: linear-gradient(90deg, var(--volt), var(--frost) 55%, transparent);
-  }
-
-  /* -------- Angka sebagai konten -------- */
+  /* Angka sebagai konten (harga, kVA, jarak, suhu) */
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
-    letter-spacing: -0.02em;
   }
-  .spec {
+  .num {
     font-family: var(--font-heading);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
     line-height: 0.95;
   }
 
-  /* -------- Skala termal (hero) -------- */
-  .thermal {
-    --drop: 268px;
-    position: relative;
-    width: 2.75rem;
-    height: 19rem;
+  /* Garis yang tergambar saat elemen induk diberi data-on */
+  .draw-line {
+    stroke-dasharray: var(--len, 600);
+    stroke-dashoffset: var(--len, 600);
   }
-  .thermal__bar {
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    background: linear-gradient(
-      180deg,
-      var(--volt) 0%,
-      color-mix(in oklab, var(--volt), var(--frost) 45%) 42%,
-      color-mix(in oklab, var(--volt), var(--frost) 80%) 70%,
-      var(--frost) 100%
-    );
-    /* Dipotong jadi segmen seperti bar alat ukur */
-    mask-image: repeating-linear-gradient(180deg, #000 0 12px, transparent 12px 17px);
-    animation: thermal-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .thermal__glow {
-    position: absolute;
-    inset: -14% -140%;
-    border-radius: 999px;
-    background: radial-gradient(closest-side, color-mix(in oklab, var(--frost) 28%, transparent), transparent 70%);
-    animation: glow-pulse 5s ease-in-out infinite;
-    animation-delay: 900ms;
-  }
-  .thermal__marker {
-    position: absolute;
-    left: -0.5rem;
-    right: -0.5rem;
-    top: 0.75rem;
-    height: 2px;
-    border-radius: 999px;
-    background: #fff;
-    box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 40%, transparent);
-    animation: thermal-drop 1100ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  [data-on='true'] .draw-line {
+    animation: draw 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
-  /* Masuk sekali, dipakai hemat (hanya elemen kunci di bawah lipatan) */
-  .animate-rise {
-    animation: rise 420ms ease-out both;
-  }
+  .lamp-on { animation: lamp-on 420ms ease-out both; }
+  .stamp-in { animation: stamp-press 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .drift { animation: drift 5s ease-in-out infinite; }
 
-  /* Baris produk/katalog yang bisa digeser di layar kecil */
-  .rail {
-    scrollbar-width: none;
-    scroll-snap-type: x mandatory;
-  }
-  .rail::-webkit-scrollbar { display: none; }
-  .rail > * { scroll-snap-align: start; }
-
-  /* Fokus yang jelas di atas band gelap */
   .focus-ink:focus-visible {
     outline: 2px solid var(--frost);
     outline-offset: 2px;
   }
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
 
+/* Tipografi artikel (tanpa plugin typography) */
+@layer components {
+  .prose-jj { font-size: 1.0625rem; line-height: 1.75; color: var(--foreground); }
+  .prose-jj > * + * { margin-top: 1.1em; }
+  .prose-jj h2 {
+    margin-top: 2.2em;
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+  .prose-jj h2 + * { margin-top: 0.7em; }
+  .prose-jj a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+  .prose-jj strong { font-weight: 600; color: var(--ink); }
+  .prose-jj ul { padding-left: 1.25rem; list-style: disc; }
+  .prose-jj li + li { margin-top: 0.4em; }
+  .prose-jj li::marker { color: var(--primary); }
+  .prose-jj table { width: 100%; border-collapse: collapse; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+  .prose-jj th, .prose-jj td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  .prose-jj th { font-weight: 600; background: var(--muted); }
+}
+
+/* Ilustrasi garis yang tampil diam (mis. placeholder kartu produk): tanpa animasi gambar */
+.art-static .draw-line {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: none;
+}

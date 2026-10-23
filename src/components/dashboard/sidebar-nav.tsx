@@ -13,6 +13,9 @@ import {
   Users,
   Settings,
   CalendarCheck,
+  Images,
+  Quote,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,7 +28,6 @@ export type NavItem = {
   badgeKey?: 'leads'
 }
 
-// "Kelola Admin" (khusus owner) menyusul di Fase 8. Menunya baru ditambahkan saat halamannya ada.
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Ringkasan', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Pesanan', href: '/dashboard/orders', icon: ClipboardList },
@@ -34,9 +36,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Kalender', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Ketersediaan', href: '/dashboard/availability', icon: CalendarCheck },
   { label: 'Produk', href: '/dashboard/products', icon: Package },
+  { label: 'Galeri', href: '/dashboard/gallery', icon: Images },
+  { label: 'Testimoni', href: '/dashboard/testimonials', icon: Quote },
   { label: 'Aset Fisik', href: '/dashboard/assets', icon: Boxes },
   { label: 'Maintenance', href: '/dashboard/maintenance', icon: Wrench },
   { label: 'Pengaturan', href: '/dashboard/settings', icon: Settings, ownerOnly: true },
+  { label: 'Kelola Admin', href: '/dashboard/admins', icon: ShieldCheck, ownerOnly: true },
 ]
 
 export const isNavActive = (pathname: string, href: string) =>
