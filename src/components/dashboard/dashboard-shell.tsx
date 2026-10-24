@@ -128,7 +128,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
         <div className="flex h-16 shrink-0 items-center px-5 text-white">
           <Brand />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="scroll-sidebar min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <SidebarNav role={role} newLeads={newLeads} />
         </div>
         <Account name={name} role={role} signOutAction={signOutAction} />
@@ -141,7 +141,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
             <SheetTitle className="sr-only">Menu dashboard</SheetTitle>
             <div className="text-white"><Brand /></div>
           </SheetHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="scroll-sidebar min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <SidebarNav role={role} newLeads={newLeads} onNavigate={() => setOpen(false)} />
           </div>
           <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
