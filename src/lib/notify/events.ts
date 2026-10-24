@@ -43,7 +43,7 @@ export async function notifyNewLead(lead: { customer_name: string; total_estimat
     href: `${SITE}/dashboard/leads`,
     label: 'Buka Leads',
   })
-  return deliver('lead baru', { to: opsRecipients(), subject: `Permintaan baru: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
+  return deliver('lead baru', { to: await opsRecipients(), subject: `Permintaan baru: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
 }
 
 // 2) Audit ke owner: pembatalan, buka kunci, ubah/hapus pembayaran
@@ -82,24 +82,45 @@ export async function notifyFailure(title: string, detail: string, orderId?: str
     href: orderId ? `${SITE}/dashboard/orders/${orderId}` : `${SITE}/dashboard`,
     label: 'Buka dashboard',
   })
-  return deliver('kegagalan', { to: opsRecipients(), subject: `[Gagal] ${title}`, html, text })
+  return deliver('kegagalan', { to: await opsRecipients(), subject: `[Gagal] ${title}`, html, text })
 }
 
-// 4) Ringkasan harian H-1 / H-2
+// 4) Ringkasan pagi: pembongkaran hari ini + jadwal H-1 / H-2
 export type DigestOrder = { id: string; code: string; customer: string; phone: string; dest: string; start: string; daysLeft: 1 | 2; hasRental: boolean; status: string }
+// Pesanan sewa yang acaranya berakhir kemarin: unit harus diambil hari ini
+export type TeardownOrder = { id: string; code: string; customer: string; phone: string; dest: string; end: string; unpaid: boolean }
 
-export async function sendDailyDigest(list: DigestOrder[]) {
-  if (list.length === 0) return { ok: true as const, skipped: true }
-  const rows: Row[] = list
+export async function sendDailyDigest(list: DigestOrder[], teardown: TeardownOrder[] = []) {
+  if (list.length === 0 && teardown.length === 0) return { ok: true as const, skipped: true }
+
+  const tearRows: Row[] = [...teardown]
+    .sort((a, b) => a.code.localeCompare(b.code))
+    .map((o) => [
+      'BONGKAR',
+      `${o.code} · ${o.customer} (${o.phone}) · ${o.dest} · acara selesai ${dateId(o.end)}${o.unpaid ? ' · BELUM LUNAS, tagih saat pengambilan' : ''}`,
+    ])
+  const aheadRows: Row[] = [...list]
     .sort((a, b) => a.daysLeft - b.daysLeft || a.code.localeCompare(b.code))
     .map((o) => [
       `H-${o.daysLeft}`,
       `${o.code} · ${o.customer} (${o.phone}) · ${o.dest} · ${dateId(o.start)}${o.hasRental && o.daysLeft === 1 ? ' · PASANG HARI INI' : ''}${o.status === 'pending_dp' ? ' · DP BELUM MASUK' : ''}`,
     ])
-  const { html, text } = layout(`Jadwal: ${list.length} pesanan dalam 2 hari ke depan`, 'Ringkasan pagi. Pastikan unit, armada, dan DP sudah siap.', rows, {
+
+  const parts = [
+    teardown.length > 0 ? `${teardown.length} bongkar hari ini` : null,
+    list.length > 0 ? `${list.length} pesanan dalam 2 hari ke depan` : null,
+  ].filter(Boolean) as string[]
+  const intro = teardown.length > 0
+    ? 'Ringkasan pagi. Kabari tim lapangan untuk mengangkut unit yang acaranya sudah selesai, dan pastikan unit, armada, dan DP jadwal berikutnya siap.'
+    : 'Ringkasan pagi. Pastikan unit, armada, dan DP sudah siap.'
+
+  const { html, text } = layout(`Jadwal: ${parts.join(', ')}`, intro, [...tearRows, ...aheadRows], {
     href: `${SITE}/dashboard/calendar`,
     label: 'Buka kalender',
   })
-  const res = await deliver('ringkasan harian', { to: opsRecipients(), subject: `Jadwal H-1/H-2: ${list.length} pesanan`, html, text })
+  const subject = teardown.length > 0
+    ? `Bongkar hari ini: ${teardown.length} pesanan${list.length > 0 ? ` · jadwal ${list.length}` : ''}`
+    : `Jadwal H-1/H-2: ${list.length} pesanan`
+  const res = await deliver('ringkasan harian', { to: await opsRecipients(), subject, html, text })
   return res.ok ? { ok: true as const, skipped: false } : { ok: false as const, reason: res.reason }
 }

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { MapPin, MessageCircle } from 'lucide-react'
-import { getStoreSettings } from '@/lib/settings'
+import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
 import { Wordmark } from './brand-mark'
 
@@ -28,7 +28,8 @@ const COLS = [
 ]
 
 export async function SiteFooter() {
-  const { wa_number } = await getStoreSettings()
+  const { wa_number, opening_hours, store_phone } = await getStoreSettings()
+  const hours = parseOpeningHours(opening_hours)
 
   return (
     <footer data-dock-hide className="band-night grain">
@@ -95,11 +96,16 @@ export async function SiteFooter() {
               <MapPin className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
               {fullAddress}
             </a>
-            {BUSINESS.hours.length > 0 ? (
+            {store_phone && (
+              <p className="text-white/65">
+                Telp. <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
+              </p>
+            )}
+            {hours.length > 0 ? (
               <ul className="space-y-1 text-white/65">
-                {BUSINESS.hours.map((h) => (
+                {hours.map((h) => (
                   <li key={h.days}>
-                    {h.days}: <span className="tnum">{h.time}</span>
+                    {h.days}{h.time && <>: <span className="tnum">{h.time}</span></>}
                   </li>
                 ))}
               </ul>

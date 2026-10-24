@@ -4,9 +4,10 @@ import { PICKUP_DESTINATION } from '@/lib/validations/order'
 import { SITE, rupiah } from '@/lib/notify/templates'
 import { calendarConfigured, createEvent, deleteEvent, updateEvent, type CalEvent } from './google'
 
-// Warna Google Calendar: 9 Blueberry (biru), 6 Tangerine (oranye), 5 Banana (kuning)
-export const KIND_COLOR = { setup: '9', sales_delivery: '6', store_pickup: '5' } as const
-type Kind = keyof typeof KIND_COLOR
+// Warna Google Calendar: 9 Blueberry (biru), 6 Tangerine (oranye), 5 Banana (kuning), 8 Graphite (abu-abu)
+// Warna sama dengan Kalender di dashboard: pasang biru, bongkar abu-abu, antar oranye, ambil kuning.
+export const KIND_COLOR = { setup: '9', sales_delivery: '6', store_pickup: '5', teardown: '8' } as const
+type Kind = Exclude<keyof typeof KIND_COLOR, 'teardown'>
 const NOTIFY_COOLDOWN_MS = 6 * 3600_000
 
 type OrderRow = {
@@ -17,7 +18,7 @@ type OrderRow = {
 }
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
 
-function desiredEvent(o: OrderRow): { kind: Kind; event: CalEvent } | null {
+export function desiredEvent(o: OrderRow): { kind: Kind; event: CalEvent } | null {
   if (o.status === 'cancelled') return null
   const c = one(o.customers)
   const items = o.order_items.map((i) => ({ qty: i.qty, p: one(i.products) }))
@@ -39,31 +40,77 @@ function desiredEvent(o: OrderRow): { kind: Kind; event: CalEvent } | null {
   return { kind, event: { summary: `${label} · ${who} · ${o.destination}`, description, date, colorId: KIND_COLOR[kind], orderId: o.id } }
 }
 
+// Event bongkar: sehari setelah acara selesai (H+1), hanya untuk pesanan yang menyewa unit
+export function desiredTeardown(o: OrderRow): CalEvent | null {
+  if (o.status === 'cancelled') return null
+  const hasRental = o.order_items.some((i) => one(i.products)?.category === 'rental')
+  if (!hasRental) return null
+  const c = one(o.customers)
+  const who = c?.name ?? 'Pelanggan'
+  const next = new Date(o.end_date + 'T00:00:00Z')
+  next.setUTCDate(next.getUTCDate() + 1)
+  const date = next.toISOString().slice(0, 10)
+  const description = [
+    `Pesanan ${o.order_code}`,
+    `Pelanggan: ${who}${c?.phone_number ? ` (${c.phone_number})` : ''}`,
+    `Lokasi: ${o.destination}`,
+    `Acara selesai: ${o.end_date}. Kabari tim lapangan untuk mengangkut unit.`,
+    `${SITE}/dashboard/orders/${o.id}`,
+  ].join('\n')
+  return { summary: `Bongkar · ${who} · ${o.destination}`, description, date, colorId: KIND_COLOR.teardown, orderId: o.id }
+}
+
+// Kolom teardown_event_id ada setelah fase-9d.sql dijalankan. Sebelum itu, event bongkar dilewati (event pasang tetap jalan).
+let teardownColumn: boolean | null = null
+async function hasTeardownColumn(db: ReturnType<typeof createAdminClient>): Promise<boolean> {
+  if (teardownColumn !== null) return teardownColumn
+  const { error } = await db.from('calendar_sync').select('teardown_event_id').limit(1)
+  teardownColumn = !error
+  if (error) console.warn('[calendar] kolom teardown_event_id belum ada: jalankan fase-9d.sql untuk event Bongkar.')
+  return teardownColumn
+}
+
 // Sinkron SATU pesanan ke Google Calendar. Tidak pernah melempar: kegagalan dicatat di calendar_sync
 // dan diberitahukan lewat email (maksimal sekali per 6 jam per pesanan).
 export async function syncOrderCalendar(orderId: string): Promise<void> {
   if (!calendarConfigured()) return
   const db = createAdminClient()
   try {
+    const teardownOk = await hasTeardownColumn(db)
     const [{ data: order }, { data: row }] = await Promise.all([
       db.from('orders')
         .select('id, order_code, status, start_date, end_date, setup_date, destination, fleet_type, total_amount, customers(name, phone_number), order_items(qty, products(name, category))')
         .eq('id', orderId).maybeSingle(),
-      db.from('calendar_sync').select('event_id, failure_notified_at').eq('order_id', orderId).maybeSingle(),
+      db.from('calendar_sync').select('*').eq('order_id', orderId).maybeSingle(),
     ])
     const want = order ? desiredEvent(order as unknown as OrderRow) : null
     let eventId = row?.event_id ?? null
+    let teardownId: string | null = (row as { teardown_event_id?: string | null } | null)?.teardown_event_id ?? null
 
     try {
       if (!want) {
         if (eventId) await deleteEvent(eventId)
-        await db.from('calendar_sync').upsert({ order_id: orderId, event_id: null, kind: null, status: 'removed', last_error: null, synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        if (teardownId) await deleteEvent(teardownId)
+        await db.from('calendar_sync').upsert({
+          order_id: orderId, event_id: null, kind: null, status: 'removed', last_error: null,
+          synced_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+          ...(teardownOk ? { teardown_event_id: null } : {}),
+        })
         return
       }
       eventId = eventId ? await updateEvent(eventId, want.event) : await createEvent(want.event)
+
+      // Event bongkar (sewa saja): buat/ubah, atau hapus bila tidak lagi relevan
+      if (teardownOk) {
+        const tear = desiredTeardown(order as unknown as OrderRow)
+        if (tear) teardownId = teardownId ? await updateEvent(teardownId, tear) : await createEvent(tear)
+        else if (teardownId) { await deleteEvent(teardownId); teardownId = null }
+      }
+
       await db.from('calendar_sync').upsert({
         order_id: orderId, event_id: eventId, kind: want.kind, status: 'synced', last_error: null,
         synced_at: new Date().toISOString(), failure_notified_at: null, updated_at: new Date().toISOString(),
+        ...(teardownOk ? { teardown_event_id: teardownId } : {}),
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -72,6 +119,7 @@ export async function syncOrderCalendar(orderId: string): Promise<void> {
       const notify = Date.now() - last > NOTIFY_COOLDOWN_MS
       await db.from('calendar_sync').upsert({
         order_id: orderId, event_id: eventId, status: 'failed', last_error: msg.slice(0, 500),
+        ...(teardownOk ? { teardown_event_id: teardownId } : {}),
         updated_at: new Date().toISOString(), ...(notify ? { failure_notified_at: new Date().toISOString() } : {}),
       })
       if (notify) await notifyFailure('Sinkron Google Calendar gagal', msg, orderId)
@@ -94,6 +142,13 @@ export async function retryPendingSyncs(): Promise<{ attempted: number }> {
   const synced = new Set((have ?? []).map((r) => r.order_id as string))
   const ids = new Set<string>((failed ?? []).map((r) => r.order_id as string))
   for (const o of upcoming ?? []) if (!synced.has(o.id as string)) ids.add(o.id as string)
+
+  // Pesanan sewa yang sudah tersinkron sebelum fase-9d belum punya event Bongkar: lengkapi (kind 'setup' = sewa)
+  if (await hasTeardownColumn(db)) {
+    const upcomingIds = new Set((upcoming ?? []).map((o) => o.id as string))
+    const { data: noTear } = await db.from('calendar_sync').select('order_id').eq('status', 'synced').eq('kind', 'setup').is('teardown_event_id', null).limit(200)
+    for (const r of noTear ?? []) if (upcomingIds.has(r.order_id as string)) ids.add(r.order_id as string)
+  }
   const list = Array.from(ids).slice(0, 40)
   for (const id of list) await syncOrderCalendar(id)
   return { attempted: list.length }

@@ -19,10 +19,10 @@ export const BUSINESS = {
   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=JJ+Teknik+Sewa+AC+Standing+Misty+Fan+Genset+Pandaan',
   mapsEmbedUrl:
     'https://www.google.com/maps?q=JJ%20Teknik%2C%20Jl.%20Sedap%20Malam%20No.16%2C%20Petungasri%2C%20Pandaan&output=embed',
-  // TODO(owner): isi jam operasional yang benar, misal { days: 'Senin–Sabtu', time: '08.00–17.00' }.
+  // Jam buka dan telepon toko diisi owner di Dashboard > Pengaturan (bukan di kode).
   // Selama kosong, situs menampilkan ajakan chat WhatsApp, bukan jam karangan.
+  // TODO(owner): telepon di spanduk (0343) 633704 / 636710 belum dikonfirmasi; isi di Pengaturan setelah yakin.
   hours: [] as { days: string; time: string }[],
-  // TODO(owner): telepon di spanduk (0343) 633704 / 636710 belum dikonfirmasi, jangan ditampilkan dulu.
   phones: [] as string[],
 } as const
 

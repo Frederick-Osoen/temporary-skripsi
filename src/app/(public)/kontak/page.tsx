@@ -5,7 +5,7 @@ import { JsonLd, localBusinessLd } from '@/components/public/json-ld'
 import { MapEmbed } from '@/components/public/map-embed'
 import { PageHero } from '@/components/public/page-hero'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
-import { getStoreSettings } from '@/lib/settings'
+import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 
 export const metadata: Metadata = {
   title: 'Kontak & Lokasi',
@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 }
 
 export default async function ContactPage() {
-  const { wa_number } = await getStoreSettings()
+  const { wa_number, opening_hours, store_phone } = await getStoreSettings()
+  const hours = parseOpeningHours(opening_hours)
   return (
     <>
       <JsonLd data={localBusinessLd(wa_number)} />
@@ -42,6 +43,14 @@ export default async function ContactPage() {
               <MapPin className="mt-1 size-4 shrink-0 text-primary" aria-hidden="true" />
               {fullAddress}
             </p>
+            {store_phone && (
+              <p className="mt-3 text-muted-foreground">
+                Telepon:{' '}
+                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">
+                  {store_phone}
+                </a>
+              </p>
+            )}
             <a
               href={BUSINESS.mapsUrl}
               target="_blank"
@@ -54,9 +63,9 @@ export default async function ContactPage() {
 
           <div>
             <h2 className="font-heading text-lg font-semibold">Jam buka</h2>
-            {BUSINESS.hours.length > 0 ? (
+            {hours.length > 0 ? (
               <dl className="mt-3 space-y-1.5">
-                {BUSINESS.hours.map((h) => (
+                {hours.map((h) => (
                   <div key={h.days} className="flex justify-between gap-6 border-b pb-1.5">
                     <dt className="text-muted-foreground">{h.days}</dt>
                     <dd className="tnum font-medium">{h.time}</dd>

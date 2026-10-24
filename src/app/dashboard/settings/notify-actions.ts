@@ -2,7 +2,7 @@
 
 import { requireOwner } from '@/lib/auth'
 import { calendarConfigured, createEvent, deleteEvent } from '@/lib/calendar/google'
-import { opsRecipients, ownerRecipients } from '@/lib/notify/recipients'
+import { opsRecipients, opsSource, ownerRecipients } from '@/lib/notify/recipients'
 import { logMail, sendEmail } from '@/lib/notify/resend'
 import { runDailyJob } from '@/lib/cron/daily'
 import { layout, SITE } from '@/lib/notify/templates'
@@ -15,7 +15,11 @@ export async function getNotifyStatus(): Promise<{ label: string; ok: boolean; h
   return [
     { label: 'RESEND_API_KEY', ok: has(process.env.RESEND_API_KEY), hint: 'Kunci API dari resend.com' },
     { label: 'OWNER_EMAIL', ok: ownerRecipients().length > 0, hint: 'Penerima audit; harus format email valid' },
-    { label: 'NOTIFY_EMAILS', ok: opsRecipients().length > 0, hint: 'Penerima lead baru dan ringkasan harian' },
+    {
+      label: 'Penerima email operasional',
+      ok: (await opsRecipients()).length > 0,
+      hint: (await opsSource()) === 'dashboard' ? 'Diatur di kartu "Penerima email" di atas' : 'Dari NOTIFY_EMAILS di .env; bisa diganti di kartu "Penerima email" di atas',
+    },
     { label: 'GOOGLE_CALENDAR_CLIENT_EMAIL', ok: has(process.env.GOOGLE_CALENDAR_CLIENT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL), hint: 'client_email dari JSON service account' },
     { label: 'GOOGLE_CALENDAR_PRIVATE_KEY', ok: has(process.env.GOOGLE_CALENDAR_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY), hint: 'private_key dari JSON service account' },
     { label: 'GOOGLE_CALENDAR_ID', ok: has(process.env.GOOGLE_CALENDAR_ID), hint: 'ID kalender yang dibagikan ke bot' },
@@ -27,7 +31,7 @@ export async function sendTestEmail(): Promise<TestResult> {
   try {
     const ctx = await requireOwner()
     if (!ctx.ok) return { ok: false, lines: [ctx.error] }
-    const to = Array.from(new Set([...ownerRecipients(), ...opsRecipients()]))
+    const to = Array.from(new Set([...ownerRecipients(), ...(await opsRecipients())]))
     const { html, text } = layout('Email uji', 'Jika Anda membaca ini, pengiriman email JJ Teknik berfungsi.', [['Dikirim oleh', ctx.name]], { href: `${SITE}/dashboard`, label: 'Buka dashboard' })
     const res = await sendEmail({ to, subject: 'Email uji JJ Teknik', html, text })
     logMail('email uji', res)
@@ -73,7 +77,7 @@ export async function removeTestEvent(eventId: string): Promise<TestResult> {
   }
 }
 
-// Menjalankan pekerjaan harian sekarang juga (tanpa curl), untuk menguji ringkasan H-1/H-2 dan sinkron ulang.
+// Menjalankan pekerjaan harian sekarang juga (tanpa curl), untuk menguji email pagi (bongkar + H-1/H-2) dan sinkron ulang.
 export async function runDailyNow(): Promise<TestResult> {
   try {
     const ctx = await requireOwner()
@@ -85,7 +89,8 @@ export async function runDailyNow(): Promise<TestResult> {
       ok: !('reason' in d),
       lines: [
         `Pesanan H-1/H-2 ditemukan: ${r.orders}`,
-        r.orders === 0 ? 'Tidak ada pesanan untuk besok atau lusa, jadi email ringkasan tidak dikirim (normal).' : 'reason' in d ? `Email ringkasan GAGAL: ${d.reason}` : 'Email ringkasan terkirim.',
+        `Pembongkaran hari ini (acara selesai kemarin): ${r.teardown}`,
+        r.orders === 0 && r.teardown === 0 ? 'Tidak ada jadwal bongkar maupun pesanan untuk besok/lusa, jadi email ringkasan tidak dikirim (normal).' : 'reason' in d ? `Email ringkasan GAGAL: ${d.reason}` : 'Email ringkasan terkirim.',
         `Sinkron kalender diulang untuk ${r.sync.attempted} pesanan.`,
       ],
     }
