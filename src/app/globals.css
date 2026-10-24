@@ -392,3 +392,26 @@
   stroke-dashoffset: 0;
   animation: none;
 }
+
+/* =====================================================================
+   DASHBOARD: satu momen gerak saat Ringkasan dimuat
+   (papan minggu & batang grafik naik berurutan). Hanya transform/opacity.
+   Pengguna dengan reduced-motion otomatis melihat hasil akhirnya.
+   ===================================================================== */
+@keyframes dash-rise {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes dash-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@layer utilities {
+  .dash-rise {
+    transform-origin: bottom;
+    animation: dash-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .dash-in {
+    animation: dash-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}

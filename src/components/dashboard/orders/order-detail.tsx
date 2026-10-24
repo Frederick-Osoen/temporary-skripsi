@@ -3,7 +3,7 @@
 import { EVENT_LABEL } from '@/lib/validations/content'
 import { useState } from 'react'
 import Link from 'next/link'
-import { CalendarPlus, LockOpen, MapPin, MessageCircle, Pencil } from 'lucide-react'
+import { CalendarPlus, Check, LockOpen, MapPin, MessageCircle, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -142,41 +142,67 @@ export function OrderDetail({
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {/* 1. Status & aksi utama */}
-          <Section title="Status">
-            {order.status === 'cancelled' ? (
-              <p className="text-sm text-destructive">Pesanan dibatalkan.</p>
-            ) : (
-              <ol className="flex flex-wrap gap-x-5 gap-y-2">
-                {flow.map((s, idx) => {
-                  const done = idx < currentIdx
-                  const current = idx === currentIdx
-                  return (
-                    <li key={s} className="flex items-center gap-2 text-sm">
-                      <span className={`h-3 w-3 shrink-0 rounded-full border ${
-                        done ? 'border-primary bg-primary' : current ? 'border-primary bg-primary/20 ring-2 ring-primary' : 'border-muted-foreground/40'
-                      }`} />
-                      <span className={current ? 'font-semibold' : done ? '' : 'text-muted-foreground'}>{STATUS_LABEL[s]}</span>
-                    </li>
-                  )
-                })}
-              </ol>
-            )}
-            <div className="max-w-sm">
-              <OrderStatusActions
-                orderId={order.id}
-                version={order.version}
-                status={order.status}
-                hasRental={order.hasRental}
-                remaining={pay.remaining}
-                shortfalls={shortfalls}
-                onRecordPayment={() => setPayOpen(true)}
-              />
-            </div>
-          </Section>
+      {/* Status & aksi utama: lebar penuh, langkah berikutnya selalu terlihat */}
+      <section aria-labelledby="status-heading" className="rounded-xl border bg-background">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-4 py-3">
+          <h2 id="status-heading" className="text-sm font-semibold">Status pesanan</h2>
+          {order.status !== 'cancelled' && currentIdx >= 0 && (
+            <p className="text-xs text-muted-foreground">Langkah {currentIdx + 1} dari {flow.length}</p>
+          )}
+        </div>
 
+        {order.status === 'cancelled' ? (
+          <p className="px-4 py-4 text-sm font-medium text-destructive">Pesanan dibatalkan dan terkunci.</p>
+        ) : (
+          <ol className="flex px-4 pt-5 pb-1" aria-label="Tahapan pesanan">
+            {flow.map((s, idx) => {
+              const done = idx < currentIdx || order.status === 'completed'
+              const current = idx === currentIdx && order.status !== 'completed'
+              return (
+                <li key={s} className="relative flex flex-1 flex-col items-center text-center" aria-current={current ? 'step' : undefined}>
+                  {idx > 0 && (
+                    <span
+                      className={`absolute right-1/2 top-3.5 h-0.5 w-full -translate-y-1/2 ${idx <= currentIdx || order.status === 'completed' ? 'bg-primary' : 'bg-border'}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span
+                    className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold tabular-nums transition-colors ${
+                      done ? 'bg-primary text-primary-foreground'
+                        : current ? 'bg-background text-primary ring-2 ring-primary ring-offset-2 ring-offset-background'
+                        : 'border bg-background text-muted-foreground'
+                    }`}
+                  >
+                    {done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : idx + 1}
+                  </span>
+                  <span className={`mt-2 hidden px-1 text-xs leading-tight sm:block ${current ? 'font-semibold text-foreground' : done ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {STATUS_LABEL[s]}
+                  </span>
+                  <span className="sr-only">{done ? ' (selesai)' : current ? ' (sekarang)' : ''}</span>
+                </li>
+              )
+            })}
+          </ol>
+        )}
+        {order.status !== 'cancelled' && currentIdx >= 0 && (
+          <p className="px-4 pt-2 text-center text-sm font-semibold sm:hidden">{STATUS_LABEL[order.status]}</p>
+        )}
+
+        <div className="p-4">
+          <OrderStatusActions
+            orderId={order.id}
+            version={order.version}
+            status={order.status}
+            hasRental={order.hasRental}
+            remaining={pay.remaining}
+            shortfalls={shortfalls}
+            onRecordPayment={() => setPayOpen(true)}
+          />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* 2. Pelanggan & pengiriman */}
           <div className="grid gap-6 md:grid-cols-2">
             <Section title="Pelanggan">
