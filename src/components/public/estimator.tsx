@@ -382,8 +382,9 @@ export function Estimator(props: EstimatorProps) {
                 )}
 
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Standar pemakaian genset {STANDARD_HOURS} jam per hari; lebih dari itu dikenai overtime per jam, dibulatkan ke
-                  atas. Jam selesai lebih kecil dari jam mulai berarti melewati tengah malam.
+                  Standar pemakaian genset {STANDARD_HOURS} jam per hari; lebih dari itu dikenai overtime per jam
+                  {result.overtimeRatePerHour > 0 ? <> sebesar <strong className="text-foreground">{formatRupiah(result.overtimeRatePerHour)}/jam</strong></> : null}, dibulatkan ke
+                  atas. Contoh: 15 jam = {STANDARD_HOURS} jam standar + {15 - STANDARD_HOURS} jam overtime. Jam selesai lebih kecil dari jam mulai berarti melewati tengah malam.
                 </p>
                 {timeError && (
                   <p role="alert" className="text-xs font-medium text-destructive">
@@ -559,7 +560,12 @@ export function Estimator(props: EstimatorProps) {
                 )}
                 {result.overtimeFee > 0 && (
                   <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Overtime genset</dt>
+                    <dt className="text-muted-foreground">
+                      Overtime genset
+                      <span className="mt-0.5 block text-xs">
+                        {result.overtimeBillableHours} jam × {formatRupiah(result.overtimeRatePerHour)}/jam
+                      </span>
+                    </dt>
                     <dd className="tnum font-medium">{formatRupiah(result.overtimeFee)}</dd>
                   </div>
                 )}
@@ -572,6 +578,17 @@ export function Estimator(props: EstimatorProps) {
                   {result.shippingPending && <span className="text-xs text-muted-foreground">belum termasuk ongkir</span>}
                 </span>
               </div>
+
+              {result.overtimeFee > 0 && (
+                <p className="rounded-lg bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">Cara hitung overtime: </span>
+                  {result.hoursPerDay !== null && !result.hoursVary
+                    ? `Sewa genset ${result.hoursPerDay} jam per hari = ${STANDARD_HOURS} jam standar + ${result.overtimeHoursPerDay} jam overtime. `
+                    : `Jam pemakaian berbeda tiap hari; hanya jam di atas ${STANDARD_HOURS} jam per hari yang dihitung overtime. `}
+                  {result.days > 1 && result.hoursPerDay !== null && !result.hoursVary ? `Berlaku untuk ${result.days} hari. ` : ''}
+                  Total {result.overtimeBillableHours} jam × {formatRupiah(result.overtimeRatePerHour)} = {formatRupiah(result.overtimeFee)}.
+                </p>
+              )}
 
               {result.overtimeUnpriced && <p className="text-xs text-warning">Tarif overtime genset akan dikonfirmasi admin.</p>}
 

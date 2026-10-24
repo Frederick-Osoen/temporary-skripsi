@@ -33,6 +33,8 @@ export type EstimateResult = {
   hoursPerDay: number | null
   overtimeHoursPerDay: number
   overtimeHoursTotal: number // jumlah overtime semua hari (jam)
+  overtimeBillableHours: number // jam yang ditagih (dibulatkan ke atas per hari)
+  overtimeRatePerHour: number // tarif gabungan semua genset yang dipilih (Rp/jam)
   hoursVary: boolean // jam berbeda antar hari
   overtimeFee: number
   overtimeUnpriced: boolean
@@ -104,6 +106,8 @@ export function calcEstimate(input: EstimateInput): EstimateResult {
     hoursPerDay: hours,
     overtimeHoursPerDay: overtimePerDay,
     overtimeHoursTotal: overtimeTotal,
+    overtimeBillableHours: billable,
+    overtimeRatePerHour: ratePerHour,
     hoursVary,
     overtimeFee, overtimeUnpriced,
     shippingFee, shippingPending,

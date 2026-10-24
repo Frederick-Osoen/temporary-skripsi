@@ -66,14 +66,12 @@ export function AssetsTable({ assets, products }: { assets: AssetRow[]; products
   const historyFor = historyId ? byId.get(historyId) ?? null : null
   const deleting = deletingId ? byId.get(deletingId) ?? null : null
 
-  const alertCount = useMemo(
-    () => assets.filter((a) => a.alert && a.alert.level !== 'ok').length,
-    [assets]
-  )
-  const data = useMemo(
-    () => (onlyAlert ? assets.filter((a) => a.alert && a.alert.level !== 'ok') : assets),
-    [assets, onlyAlert]
-  )
+  // Perlu perhatian: jatuh tempo perawatan, atau status fisik rusak / sedang diservis
+  const needsAttention = (a: AssetRow) =>
+    a.status === 'damaged' || a.status === 'maintenance' || (a.alert !== null && a.alert.level !== 'ok')
+  const alertCount = useMemo(() => assets.filter(needsAttention).length, [assets])
+  const downCount = useMemo(() => assets.filter((a) => a.status === 'damaged' || a.status === 'maintenance').length, [assets])
+  const data = useMemo(() => (onlyAlert ? assets.filter(needsAttention) : assets), [assets, onlyAlert])
 
   const columns = useMemo<ColumnDef<AssetRow>[]>(
     () => [
@@ -215,7 +213,8 @@ export function AssetsTable({ assets, products }: { assets: AssetRow[]; products
           onClick={() => { setOnlyAlert((v) => !v); goFirstPage() }}
           className="w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-left text-sm text-amber-900"
         >
-          {alertCount} unit AC perlu perawatan. {onlyAlert ? 'Klik untuk tampilkan semua.' : 'Klik untuk menampilkan hanya unit ini.'}
+          {alertCount} unit perlu perhatian
+          {downCount > 0 ? ` (${downCount} rusak / sedang diservis, ${alertCount - downCount} jatuh tempo perawatan)` : ' (jatuh tempo perawatan)'}. {onlyAlert ? 'Klik untuk tampilkan semua.' : 'Klik untuk menampilkan hanya unit ini.'}
         </button>
       )}
 
