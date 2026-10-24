@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { removeTestEvent, sendTestEmail, testCalendar, type TestResult } from '@/app/dashboard/settings/notify-actions'
+import { removeTestEvent, runDailyNow, sendTestEmail, testCalendar, type TestResult } from '@/app/dashboard/settings/notify-actions'
 import { safeAction } from '@/lib/action-client'
 
 export function NotifyTester({ status }: { status: { label: string; ok: boolean; hint: string }[] }) {
@@ -38,6 +38,7 @@ export function NotifyTester({ status }: { status: { label: string; ok: boolean;
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" disabled={pending} onClick={() => run('Email uji', sendTestEmail)}>Kirim email uji</Button>
         <Button type="button" variant="outline" disabled={pending} onClick={() => run('Uji kalender', testCalendar)}>Uji Google Calendar</Button>
+        <Button type="button" variant="outline" disabled={pending} onClick={() => run('Pekerjaan harian', runDailyNow)}>Jalankan pekerjaan harian</Button>
       </div>
       {result?.r.eventId && (
         <Button type="button" variant="secondary" disabled={pending} onClick={() => run('Hapus event uji', () => removeTestEvent(result.r.eventId!))}>Hapus event uji</Button>

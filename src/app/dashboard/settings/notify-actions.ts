@@ -4,6 +4,7 @@ import { requireOwner } from '@/lib/auth'
 import { calendarConfigured, createEvent, deleteEvent } from '@/lib/calendar/google'
 import { opsRecipients, ownerRecipients } from '@/lib/notify/recipients'
 import { logMail, sendEmail } from '@/lib/notify/resend'
+import { runDailyJob } from '@/lib/cron/daily'
 import { layout, SITE } from '@/lib/notify/templates'
 
 export type TestResult = { ok: boolean; lines: string[]; eventId?: string }
@@ -69,5 +70,27 @@ export async function removeTestEvent(eventId: string): Promise<TestResult> {
   } catch (err) {
     console.error('[settings] hapus event uji:', err)
     return { ok: false, lines: [err instanceof Error ? err.message : 'Gagal.'] }
+  }
+}
+
+// Menjalankan pekerjaan harian sekarang juga (tanpa curl), untuk menguji ringkasan H-1/H-2 dan sinkron ulang.
+export async function runDailyNow(): Promise<TestResult> {
+  try {
+    const ctx = await requireOwner()
+    if (!ctx.ok) return { ok: false, lines: [ctx.error] }
+    const r = await runDailyJob()
+    if (!r.ok) return { ok: false, lines: [`Gagal membaca pesanan: ${r.error}`] }
+    const d = r.digest
+    return {
+      ok: !('reason' in d),
+      lines: [
+        `Pesanan H-1/H-2 ditemukan: ${r.orders}`,
+        r.orders === 0 ? 'Tidak ada pesanan untuk besok atau lusa, jadi email ringkasan tidak dikirim (normal).' : 'reason' in d ? `Email ringkasan GAGAL: ${d.reason}` : 'Email ringkasan terkirim.',
+        `Sinkron kalender diulang untuk ${r.sync.attempted} pesanan.`,
+      ],
+    }
+  } catch (err) {
+    console.error('[settings] jalankan cron:', err)
+    return { ok: false, lines: ['Terjadi kesalahan pada server.'] }
   }
 }
