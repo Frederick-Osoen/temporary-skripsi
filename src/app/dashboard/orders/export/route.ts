@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const from = /^\d{4}-\d{2}-\d{2}$/.test(sp.get('from') ?? '') ? sp.get('from')! : null
   const to = /^\d{4}-\d{2}-\d{2}$/.test(sp.get('to') ?? '') ? sp.get('to')! : null
   const status = sp.get('status')
+  const bulan = /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.get('bulan') ?? '') ? sp.get('bulan')! : null
 
   const supabase = await createClient()
   let q = supabase
@@ -27,6 +28,10 @@ export async function GET(request: Request) {
     .select('order_code, created_at, status, start_date, end_date, destination, fleet_type, shipping_fee, fuel_fee, toll_fee, overtime_fee, total_amount, customers(name, phone_number)')
     .order('created_at', { ascending: false })
     .limit(5000)
+  if (bulan) {
+    const [y, m] = bulan.split('-').map(Number)
+    q = q.gte('start_date', `${bulan}-01`).lte('start_date', `${bulan}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`)
+  }
   if (from) q = q.gte('start_date', from)
   if (to) q = q.lte('start_date', to)
   if (status && (ORDER_STATUSES as readonly string[]).includes(status)) q = q.eq('status', status)
@@ -50,7 +55,7 @@ export async function GET(request: Request) {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="pesanan-${day}.csv"`,
+      'Content-Disposition': `attachment; filename="pesanan-${bulan ?? day}.csv"`,
       'Cache-Control': 'no-store',
     },
   })

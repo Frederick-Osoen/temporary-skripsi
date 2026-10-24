@@ -58,13 +58,15 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
 
             {/* Drawer HP: menu lengkap */}
             <Sheet open={open} onOpenChange={setOpen}>
-                <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
+                <SheetContent side="left" className="flex w-72 flex-col gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
                     <SheetHeader className="border-b border-sidebar-border px-5 py-4 text-left">
                         <SheetTitle className="sr-only">Menu dashboard</SheetTitle>
                         <div className="text-white"><Brand /></div>
                     </SheetHeader>
-                    <SidebarNav role={role} newLeads={newLeads} onNavigate={() => setOpen(false)} />
-                    <div className="mt-auto border-t border-sidebar-border p-4 text-sm">
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                        <SidebarNav role={role} newLeads={newLeads} onNavigate={() => setOpen(false)} />
+                    </div>
+                    <div className="border-t border-sidebar-border p-4 text-sm">
                         <p className="truncate font-medium text-white">{name}</p>
                         <p className="text-xs capitalize opacity-70">{role}</p>
                     </div>

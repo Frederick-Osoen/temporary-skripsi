@@ -37,9 +37,12 @@ export default async function MaintenancePage() {
 
   if (error) return <p className="text-sm text-destructive">Gagal memuat data perawatan: {error}</p>
 
-  const urgent = units.filter((u) => u.alert.level === 'urgent')
-  const warning = units.filter((u) => u.alert.level === 'warning')
-  const ok = units.filter((u) => u.alert.level === 'ok')
+  // Unit rusak / sedang diservis ditampilkan tersendiri: status fisik lebih penting daripada hitungan sewa
+  const down = units.filter((u) => u.status === 'damaged' || u.status === 'maintenance')
+  const active = units.filter((u) => u.status !== 'damaged' && u.status !== 'maintenance')
+  const urgent = active.filter((u) => u.alert.level === 'urgent')
+  const warning = active.filter((u) => u.alert.level === 'warning')
+  const ok = active.filter((u) => u.alert.level === 'ok')
   const needs = [...urgent, ...warning]
 
   return (
@@ -57,7 +60,11 @@ export default async function MaintenancePage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border bg-background p-4">
+          <p className={`text-2xl font-bold tabular-nums ${down.length > 0 ? 'text-destructive' : ''}`}>{down.length}</p>
+          <p className="text-xs text-muted-foreground">Rusak / diservis</p>
+        </div>
         <div className="rounded-xl border bg-background p-4">
           <p className="text-2xl font-bold tabular-nums text-destructive">{urgent.length}</p>
           <p className="text-xs text-muted-foreground">Mendesak</p>
@@ -78,7 +85,29 @@ export default async function MaintenancePage() {
         </p>
       )}
 
-      {units.length > 0 && needs.length === 0 && (
+      {down.length > 0 && (
+        <section aria-labelledby="down" className="space-y-3">
+          <h2 id="down" className="flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" /> Tidak bisa disewakan ({down.length})
+          </h2>
+          <ul className="grid gap-3 md:grid-cols-2">
+            {down.map((u) => (
+              <li key={u.id} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+                <div>
+                  <p className="font-semibold">{u.asset_code}</p>
+                  <p className="text-xs text-muted-foreground">{u.product_name} · total {u.total_count}x sewa</p>
+                </div>
+                <Badge variant="outline" className="border-red-300 bg-red-100 text-red-800">{STATUS_LABEL[u.status]}</Badge>
+              </li>
+            ))}
+          </ul>
+          <Link href="/dashboard/assets" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+            Ubah status unit di Aset Fisik
+          </Link>
+        </section>
+      )}
+
+      {units.length > 0 && needs.length === 0 && down.length === 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
           <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
           Semua unit AC dalam kondisi normal. Tidak ada perawatan yang jatuh tempo.
