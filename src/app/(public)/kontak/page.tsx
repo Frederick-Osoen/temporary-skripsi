@@ -32,7 +32,7 @@ export default async function ContactPage() {
             </span>
             <span>
               <span className="block font-heading text-lg font-semibold">Chat admin</span>
-              <span className="text-sm text-white/85">Dibalas langsung oleh pemilik toko</span>
+              <span className="text-sm text-white">Dibalas langsung oleh pemilik toko</span>
             </span>
           </a>
 
