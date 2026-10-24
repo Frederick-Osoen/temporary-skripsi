@@ -14,8 +14,8 @@ OWNER_EMAIL=email-owner@gmail.com            # penerima audit (batal / buka kunc
 NOTIFY_EMAILS=admin1@gmail.com,admin2@gmail.com  # opsional: lead baru, ringkasan harian, kegagalan (owner otomatis ikut)
 
 # Google Calendar (dari file JSON service account)
-GOOGLE_SERVICE_ACCOUNT_EMAIL=bot-kalender-jjteknik@project-....iam.gserviceaccount.com   # field client_email
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"        # field private_key, satu baris, \n tetap ditulis \n
+GOOGLE_CALENDAR_CLIENT_EMAIL=bot-kalender-jjteknik@project-....iam.gserviceaccount.com   # field client_email
+GOOGLE_CALENDAR_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"        # field private_key, satu baris, \n tetap ditulis \n
 GOOGLE_CALENDAR_ID=xxxx@group.calendar.google.com   # Google Calendar > Settings > Integrate calendar > Calendar ID
 
 # Cron (juga dipakai keep-alive)

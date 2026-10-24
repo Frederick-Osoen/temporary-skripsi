@@ -1,13 +1,16 @@
 import { createSign } from 'node:crypto'
 
 // Klien Google Calendar minimal dengan service account (tanpa library googleapis).
-// Env: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY (baris baru ditulis \n), GOOGLE_CALENDAR_ID
+// Env: GOOGLE_CALENDAR_CLIENT_EMAIL, GOOGLE_CALENDAR_PRIVATE_KEY (baris baru ditulis \n), GOOGLE_CALENDAR_ID
+// (nama lama GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY tetap dikenali)
 const SCOPE = 'https://www.googleapis.com/auth/calendar.events'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const API = 'https://www.googleapis.com/calendar/v3/calendars'
 
-export const calendarConfigured = () =>
-  !!(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY && process.env.GOOGLE_CALENDAR_ID)
+const clientEmail = () => process.env.GOOGLE_CALENDAR_CLIENT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+const privateKey = () => process.env.GOOGLE_CALENDAR_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY
+
+export const calendarConfigured = () => !!(clientEmail() && privateKey() && process.env.GOOGLE_CALENDAR_ID)
 
 const b64url = (b: Buffer | string) => Buffer.from(b).toString('base64url')
 
@@ -15,8 +18,8 @@ let cached: { token: string; exp: number } | null = null
 
 async function accessToken(): Promise<string> {
   if (cached && cached.exp > Date.now() + 60_000) return cached.token
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!
-  const key = process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
+  const email = clientEmail()!
+  const key = privateKey()!.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
   const now = Math.floor(Date.now() / 1000)
   const unsigned = `${b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))}.${b64url(JSON.stringify({ iss: email, scope: SCOPE, aud: TOKEN_URL, iat: now, exp: now + 3600 }))}`
   const sig = createSign('RSA-SHA256').update(unsigned).sign(key)
