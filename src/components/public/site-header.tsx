@@ -26,8 +26,9 @@ const MOBILE_EXTRA = [
   { href: '/artikel', label: 'Artikel' },
 ]
 
-// Halaman yang dibuka dengan band malam: header ikut gelap sampai digulir
-const NIGHT_ROUTES = ['/', '/tentang']
+// Halaman yang dibuka dengan band malam: header ikut gelap sampai digulir.
+// Tambahkan rute di sini bila seksi pertama halaman baru memakai `band-night`.
+const NIGHT_ROUTES = ['/', '/tentang', '/kalkulator']
 
 const isActive = (pathname: string, href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
@@ -94,13 +95,19 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
               <span className="tnum">{count}</span>
             </Link>
           )}
-          <Link
-            href="/estimasi"
-            // Di atas hero malam, ajakan yang sama sudah ada di hero: tombol header baru muncul setelah digulir
-            className={cn(buttonVariants({ className: 'hidden h-10 rounded-full px-4 sm:inline-flex' }), night && 'sm:hidden')}
-          >
-            Hitung estimasi
-          </Link>
+          {/* Selalu ada di semua halaman. Di atas band malam tampil sebagai tombol garis supaya amber hero tetap satu-satunya CTA utama */}
+          {!pathname.startsWith('/estimasi') && (
+            <Link
+              href="/estimasi"
+              className={cn(
+                night
+                  ? 'focus-ink hidden h-10 items-center rounded-full px-4 text-sm font-medium text-white ring-1 ring-white/30 transition-colors ring-inset hover:bg-white/10 sm:inline-flex'
+                  : buttonVariants({ className: 'hidden h-10 rounded-full px-4 sm:inline-flex' })
+              )}
+            >
+              Hitung estimasi
+            </Link>
+          )}
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger

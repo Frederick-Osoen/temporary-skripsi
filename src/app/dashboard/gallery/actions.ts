@@ -11,6 +11,7 @@ const id = z.string().uuid()
 function refresh() {
   revalidatePath('/dashboard/gallery')
   revalidatePath('/galeri')
+  revalidatePath('/tentang')
   revalidatePath('/')
 }
 

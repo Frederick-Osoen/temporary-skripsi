@@ -433,3 +433,43 @@
   .scroll-sidebar:focus-within::-webkit-scrollbar-thumb { background: rgb(214 228 240 / 0.25); }
   .scroll-sidebar::-webkit-scrollbar-button { display: none; height: 0; }
 }
+
+/* =====================================================================
+   /tentang: cincin jangkauan. Titik Pandaan menyala, cincin meluas satu per satu
+   (menjelaskan jangkauan dari gudang), lalu cincin putus-putus berputar pelan dan
+   denyut dingin terus menyebar dari pusat. Reduced-motion: langsung keadaan akhir.
+   ===================================================================== */
+@keyframes reach-grow {
+  from { transform: scale(0); opacity: 0; }
+  50% { opacity: 1; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes reach-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes reach-spin { to { transform: rotate(360deg); } }
+@keyframes reach-pulse {
+  0% { transform: scale(0.15); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 0; }
+}
+@keyframes reach-dot {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.reach :where(.reach-grow, .reach-spin, .reach-spin-rev, .reach-pulse, .reach-dot) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.reach .reach-grow { animation: reach-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.reach .reach-fade { animation: reach-fade 0.5s ease-out both; }
+.reach .reach-dot { animation: reach-dot 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.reach .reach-spin { animation: reach-spin 48s linear infinite; }
+.reach .reach-spin-rev { animation: reach-spin 80s linear infinite reverse; }
+.reach .reach-pulse { animation: reach-pulse 3.4s cubic-bezier(0.2, 0.7, 0.3, 1) 1.6s infinite both; }
+@media (prefers-reduced-motion: reduce) {
+  .reach .reach-pulse { display: none; }
+}
+/* Ditahan PlayWhenVisible sampai terlihat */
+[data-play='wait'] * { animation-play-state: paused !important; }

@@ -31,7 +31,7 @@ export async function SiteFooter() {
   const { wa_number } = await getStoreSettings()
 
   return (
-    <footer className="band-night grain">
+    <footer data-dock-hide className="band-night grain">
       {/* Penutup: satu ajakan terakhir sebelum detail kontak */}
       <div className="mx-auto max-w-6xl px-4 pt-20 pb-14 sm:pt-24">
         <p className="max-w-3xl font-heading text-4xl leading-[1.02] font-semibold tracking-tight sm:text-6xl">

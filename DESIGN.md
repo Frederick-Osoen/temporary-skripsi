@@ -81,7 +81,9 @@ Perilaku estimator yang harus dipertahankan:
 
 `/` Beranda · `/katalog` · `/estimasi` · `/kalkulator` · `/galeri` · `/testimoni` · `/tentang` · `/kontak` · `/artikel` + `/artikel/[slug]` (konten statis di `src/content/articles.tsx`) · `sitemap.xml` · `robots.txt`. JSON-LD: LocalBusiness (Beranda, Kontak), FAQPage (Beranda), Article (artikel).
 
-Elemen tetap di semua halaman: header (gelap di atas band malam `/` dan `/tentang`, terang setelah digulir), dok bawah (keranjang + tombol WhatsApp; disembunyikan di `/estimasi` karena estimator punya bilah total sendiri), footer dengan ajakan penutup.
+Elemen tetap di semua halaman: header (gelap di atas band malam `/`, `/tentang`, `/kalkulator` — daftar `NIGHT_ROUTES` di `site-header.tsx` — terang setelah digulir; tombol "Hitung estimasi" selalu ada kecuali di `/estimasi`, berupa tombol garis di atas band malam), dok bawah (keranjang + tombol WhatsApp; mengecil jadi ikon saat menggulir ke bawah, menyingkir saat footer `[data-dock-hide]` terlihat, disembunyikan di `/estimasi`), footer dengan ajakan penutup.
+
+Foto tim `/tentang`: isi `src/lib/public/team.ts` + file di `public/tim/`; seksi tersembunyi bila kosong. Animasi yang berada di bawah lipatan dibungkus `PlayWhenVisible` supaya baru diputar saat terlihat.
 
 ## 8. Definition of done untuk perubahan tampilan
 

@@ -219,29 +219,42 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ================= TESTIMONI & GALERI (tampil hanya bila sudah ada isinya) ================= */}
-      {testimonials.length > 0 && (
-        <section aria-labelledby="testi" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
-          <h2 id="testi" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
-            Kata mereka.
-          </h2>
-          <div className="mt-10">
-            <TestimonialList items={testimonials.slice(0, 3)} />
-          </div>
-        </section>
-      )}
-      {gallery.length > 0 && (
-        <section aria-labelledby="galeri" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
-          <div className="flex flex-wrap items-end justify-between gap-5">
-            <h2 id="galeri" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
-              Dari lapangan.
-            </h2>
-            <Link href="/galeri" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
-              Lihat galeri
-            </Link>
-          </div>
-          <div className="mt-10">
-            <GalleryGrid items={gallery.slice(0, 6)} />
+      {/* ================= TESTIMONI & GALERI (tampil hanya bila sudah ada isinya) =================
+          Keduanya bukti dari lapangan, jadi disatukan dalam satu band berwarna. Band ini memisahkan
+          kalkulator (malam) dari FAQ (terang) supaya bagian bawah beranda tidak menjadi satu blok putih panjang. */}
+      {(testimonials.length > 0 || gallery.length > 0) && (
+        <section aria-label="Bukti dari pelanggan" className="border-b bg-muted/60">
+          <div className="mx-auto max-w-6xl divide-y px-4">
+            {testimonials.length > 0 && (
+              <div className="py-16 sm:py-20">
+                <div className="flex flex-wrap items-end justify-between gap-5">
+                  <h2 id="testi" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
+                    Kata mereka.
+                  </h2>
+                  <Link href="/testimoni" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                    Semua testimoni
+                  </Link>
+                </div>
+                <div className="mt-10">
+                  <TestimonialList items={testimonials.slice(0, 3)} />
+                </div>
+              </div>
+            )}
+            {gallery.length > 0 && (
+              <div className="py-16 sm:py-20">
+                <div className="flex flex-wrap items-end justify-between gap-5">
+                  <h2 id="galeri" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
+                    Dari lapangan.
+                  </h2>
+                  <Link href="/galeri" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                    Lihat galeri
+                  </Link>
+                </div>
+                <div className="mt-10">
+                  <GalleryGrid items={gallery.slice(0, 6)} />
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
