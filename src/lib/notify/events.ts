@@ -1,6 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { opsRecipients, ownerRecipients } from './recipients'
-import { sendEmail } from './resend'
+import { logMail, sendEmail, type MailResult } from './resend'
+
+const deliver = async (label: string, p: Parameters<typeof sendEmail>[0]): Promise<MailResult> => {
+  const r = await sendEmail(p)
+  logMail(label, r)
+  return r
+}
 import { SITE, dateId, layout, rupiah, type Row } from './templates'
 
 type OrderBrief = { code: string; customer: string; status: string; start: string; dest: string; total: number }
@@ -37,7 +43,7 @@ export async function notifyNewLead(lead: { customer_name: string; total_estimat
     href: `${SITE}/dashboard/leads`,
     label: 'Buka Leads',
   })
-  return sendEmail({ to: opsRecipients(), subject: `Permintaan baru: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
+  return deliver('lead baru', { to: opsRecipients(), subject: `Permintaan baru: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
 }
 
 // 2) Audit ke owner: pembatalan, buka kunci, ubah/hapus pembayaran
@@ -62,7 +68,7 @@ export async function notifyAudit(a: { kind: AuditKind; orderId: string; actor: 
     href: `${SITE}/dashboard/orders/${a.orderId}`,
     label: 'Lihat pesanan',
   })
-  return sendEmail({ to: ownerRecipients(), subject: `[Audit] ${AUDIT_TITLE[a.kind]}${o ? ` – ${o.code}` : ''}`, html, text })
+  return deliver(`audit ${a.kind}`, { to: ownerRecipients(), subject: `[Audit] ${AUDIT_TITLE[a.kind]}${o ? ` – ${o.code}` : ''}`, html, text })
 }
 
 // 3) Kegagalan sistem (mis. sinkron kalender) ke admin
@@ -76,7 +82,7 @@ export async function notifyFailure(title: string, detail: string, orderId?: str
     href: orderId ? `${SITE}/dashboard/orders/${orderId}` : `${SITE}/dashboard`,
     label: 'Buka dashboard',
   })
-  return sendEmail({ to: opsRecipients(), subject: `[Gagal] ${title}`, html, text })
+  return deliver('kegagalan', { to: opsRecipients(), subject: `[Gagal] ${title}`, html, text })
 }
 
 // 4) Ringkasan harian H-1 / H-2
@@ -94,6 +100,6 @@ export async function sendDailyDigest(list: DigestOrder[]) {
     href: `${SITE}/dashboard/calendar`,
     label: 'Buka kalender',
   })
-  const res = await sendEmail({ to: opsRecipients(), subject: `Jadwal H-1/H-2: ${list.length} pesanan`, html, text })
-  return res.ok ? { ok: true as const, skipped: false } : res
+  const res = await deliver('ringkasan harian', { to: opsRecipients(), subject: `Jadwal H-1/H-2: ${list.length} pesanan`, html, text })
+  return res.ok ? { ok: true as const, skipped: false } : { ok: false as const, reason: res.reason }
 }

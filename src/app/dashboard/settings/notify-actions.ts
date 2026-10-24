@@ -1,0 +1,61 @@
+'use server'
+
+import { requireOwner } from '@/lib/auth'
+import { calendarConfigured, createEvent, deleteEvent } from '@/lib/calendar/google'
+import { opsRecipients, ownerRecipients } from '@/lib/notify/recipients'
+import { logMail, sendEmail } from '@/lib/notify/resend'
+import { layout, SITE } from '@/lib/notify/templates'
+
+export type TestResult = { ok: boolean; lines: string[] }
+
+// Hanya menampilkan ADA/TIDAK ADA, tidak pernah nilainya.
+export async function getNotifyStatus(): Promise<{ label: string; ok: boolean; hint: string }[]> {
+  const has = (v: string | undefined) => !!v?.trim()
+  return [
+    { label: 'RESEND_API_KEY', ok: has(process.env.RESEND_API_KEY), hint: 'Kunci API dari resend.com' },
+    { label: 'OWNER_EMAIL', ok: ownerRecipients().length > 0, hint: 'Penerima audit; harus format email valid' },
+    { label: 'NOTIFY_EMAILS', ok: opsRecipients().length > 0, hint: 'Penerima lead baru dan ringkasan harian' },
+    { label: 'GOOGLE_CALENDAR_CLIENT_EMAIL', ok: has(process.env.GOOGLE_CALENDAR_CLIENT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL), hint: 'client_email dari JSON service account' },
+    { label: 'GOOGLE_CALENDAR_PRIVATE_KEY', ok: has(process.env.GOOGLE_CALENDAR_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY), hint: 'private_key dari JSON service account' },
+    { label: 'GOOGLE_CALENDAR_ID', ok: has(process.env.GOOGLE_CALENDAR_ID), hint: 'ID kalender yang dibagikan ke bot' },
+    { label: 'CRON_SECRET', ok: has(process.env.CRON_SECRET), hint: 'Dibutuhkan endpoint cron harian' },
+  ]
+}
+
+export async function sendTestEmail(): Promise<TestResult> {
+  try {
+    const ctx = await requireOwner()
+    if (!ctx.ok) return { ok: false, lines: [ctx.error] }
+    const to = Array.from(new Set([...ownerRecipients(), ...opsRecipients()]))
+    const { html, text } = layout('Email uji', 'Jika Anda membaca ini, pengiriman email JJ Teknik berfungsi.', [['Dikirim oleh', ctx.name]], { href: `${SITE}/dashboard`, label: 'Buka dashboard' })
+    const res = await sendEmail({ to, subject: 'Email uji JJ Teknik', html, text })
+    logMail('email uji', res)
+    const lines = [
+      ...res.sent.map((t) => `Terkirim ke ${t}`),
+      ...res.failed.map((f) => `GAGAL ke ${f.to}: ${f.reason}`),
+    ]
+    if (!res.ok) lines.unshift(res.reason)
+    if (res.failed.some((f) => f.reason.includes('403'))) {
+      lines.push('Resend tanpa domain terverifikasi hanya mau mengirim ke email akun Resend Anda. Hapus email lain dari .env.local untuk tes, atau verifikasi domain di resend.com/domains.')
+    }
+    return { ok: res.ok, lines }
+  } catch (err) {
+    console.error('[settings] uji email:', err)
+    return { ok: false, lines: ['Terjadi kesalahan pada server.'] }
+  }
+}
+
+export async function testCalendar(): Promise<TestResult> {
+  try {
+    const ctx = await requireOwner()
+    if (!ctx.ok) return { ok: false, lines: [ctx.error] }
+    if (!calendarConfigured()) return { ok: false, lines: ['Env Google Calendar belum lengkap (lihat daftar di atas).'] }
+    const date = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)
+    const id = await createEvent({ summary: 'Uji sinkron JJ Teknik (boleh dihapus)', description: 'Event uji dari Dashboard > Pengaturan.', date, colorId: '9', orderId: 'uji' })
+    await deleteEvent(id)
+    return { ok: true, lines: ['Berhasil: event uji dibuat lalu dihapus dari kalender. Sinkron berfungsi.'] }
+  } catch (err) {
+    console.error('[settings] uji kalender:', err)
+    return { ok: false, lines: [err instanceof Error ? err.message : 'Gagal.'] }
+  }
+}

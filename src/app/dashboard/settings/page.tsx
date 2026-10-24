@@ -1,6 +1,8 @@
 import { getCurrentAdmin } from '@/lib/auth'
 import { AuthProblem } from '@/components/dashboard/auth-problem'
 import { SettingsForm } from '@/components/dashboard/settings/settings-form'
+import { NotifyTester } from '@/components/dashboard/settings/notify-tester'
+import { getNotifyStatus } from './notify-actions'
 import { DEFAULT_SETTINGS, type StoreSettings } from '@/lib/settings'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +34,7 @@ export default async function SettingsPage() {
         </p>
       )}
       <SettingsForm initial={initial} canEdit={!missing && admin.role === 'owner'} />
+      {admin.role === 'owner' && <NotifyTester status={await getNotifyStatus()} />}
     </div>
   )
 }

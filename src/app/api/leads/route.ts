@@ -83,6 +83,6 @@ export async function POST(request: Request) {
     console.error('[leads] insert gagal:', error)
     return NextResponse.json({ ok: false }, { status: 500 })
   }
-  after(() => notifyNewLead({ customer_name: customer_name || 'Tanpa nama', total_estimate, payload }).then(() => undefined).catch((e) => console.error('[leads] email gagal:', e)))
+  after(() => notifyNewLead({ customer_name: customer_name || 'Tanpa nama', total_estimate, payload }).catch((e) => console.error('[leads] email gagal:', e)))
   return ok()
 }
