@@ -7,7 +7,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { isAcProduct } from '@/lib/maintenance'
-import { calcHours, STANDARD_HOURS } from '@/lib/orders/schedule'
+import { calcHours, eachDay, STANDARD_HOURS } from '@/lib/orders/schedule'
 import { rentalDays, todayWIB } from '@/lib/orders/utils'
 import { calcEstimate, type EstimateInput, type EstimateLine } from '@/lib/public/estimate'
 import { fleetPlanLabel, planFleet } from '@/lib/public/fleet'
@@ -16,6 +16,8 @@ import type { PublicProduct } from '@/lib/public/types'
 import { buildWhatsAppDraft } from '@/lib/public/whatsapp'
 import { useCart } from '@/lib/public/cart'
 import { sendLead } from '@/lib/public/leads-client'
+import { EVENT_TYPE_LABEL, type EventType } from '@/lib/public/content-types'
+import { formatDate } from '@/lib/orders/utils'
 
 export const MAX_QTY = 99
 export const MAX_DAYS = 60
@@ -56,6 +58,11 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     // Jam default dikosongkan sesuai instruksi
     const [startTime, setStartTime] = useState('')
     const [endTime, setEndTime] = useState('')
+
+    // Jam per hari: bawaan satu pasang jam untuk semua hari; boleh dibuat berbeda tiap hari
+    const [sameHours, setSameHoursState] = useState(true)
+    const [dayTimes, setDayTimes] = useState<Record<string, { start: string; end: string }>>({})
+    const [eventType, setEventType] = useState<EventType | ''>('')
 
     const [deliveryChoice, setDeliveryChoice] = useState<'delivery' | 'store_pickup'>('delivery')
     const [destination, setDestination] = useState('')
@@ -118,10 +125,39 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     const hasGenset = lines.some((l) => l.capacity_kva !== null)
     const delivery = hasRental ? 'delivery' : deliveryChoice
 
+    // ---------- jam per hari ----------
+    const datesValid = !!startDate && !!endDate && endDate >= startDate && rentalDays(startDate, endDate) <= MAX_DAYS
+    const dayList = hasRental && datesValid ? eachDay(startDate, endDate, MAX_DAYS) : []
+    const dayHours = hasGenset
+        ? dayList.map((date) =>
+            sameHours
+                ? { date, start: startTime, end: endTime }
+                : { date, start: dayTimes[date]?.start ?? '', end: dayTimes[date]?.end ?? '' }
+        )
+        : []
+
+    function setSameHours(v: boolean) {
+        if (!v) {
+            // saat beralih ke jam per hari, isi awal dari jam bawaan agar tidak mulai dari kosong
+            setDayTimes((prev) => {
+                const next = { ...prev }
+                for (const d of dayList) if (!next[d]) next[d] = { start: startTime, end: endTime }
+                return next
+            })
+        }
+        setSameHoursState(v)
+    }
+    const setDayTime = (date: string, patch: Partial<{ start: string; end: string }>) =>
+        setDayTimes((prev) => ({ ...prev, [date]: { ...(prev[date] ?? { start: '', end: '' }), ...patch } }))
+
+    const incompleteDays = hasGenset && !sameHours ? dayHours.filter((d) => !d.start || !d.end).length : 0
+
     // Error jam genset
-    const timeError = hasGenset && (!startTime || !endTime)
-        ? 'Jam mulai dan jam selesai wajib diisi untuk sewa genset (dasar perhitungan lembur).'
-        : null
+    const timeError = !hasGenset
+        ? null
+        : sameHours
+            ? (!startTime || !endTime ? 'Jam mulai dan jam selesai wajib diisi untuk sewa genset (dasar perhitungan lembur).' : null)
+            : (incompleteDays > 0 ? `Jam genset belum lengkap untuk ${incompleteDays} hari. Isi jam mulai dan selesai tiap hari.` : null)
 
     // ---------- ongkir ----------
     async function calculate(text: string) {
@@ -168,7 +204,10 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     const plan = planFleet(lines)
     const input: EstimateInput = {
         lines, start_date: startDate, end_date: hasRental ? endDate : startDate,
-        start_time: startTime, end_time: endTime, delivery, plan,
+        start_time: sameHours ? startTime : (dayHours[0]?.start ?? startTime),
+        end_time: sameHours ? endTime : (dayHours[0]?.end ?? endTime),
+        day_hours: dayHours.length > 0 ? dayHours : undefined,
+        delivery, plan,
         shipping: shipping.status === 'ok' ? { zone: shipping.zone, perFleet: shipping.perFleet } : { zone: null, perFleet: null },
     }
     const result = calcEstimate(input)
@@ -182,8 +221,12 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     else if (!datesOk) issues.push('Tanggal selesai tidak boleh sebelum tanggal mulai.')
     else if (tooLong) issues.push(`Durasi sewa maksimal ${MAX_DAYS} hari. Untuk durasi lebih lama, hubungi admin.`)
 
-    if (hasGenset && startTime && endTime && calcHours(startTime, endTime) === null) {
+    if (hasGenset && sameHours && startTime && endTime && calcHours(startTime, endTime) === null) {
         issues.push('Jam mulai dan selesai tidak boleh sama.')
+    }
+    if (hasGenset && !sameHours) {
+        const bad = dayHours.find((d) => d.start && d.end && calcHours(d.start, d.end) === null)
+        if (bad) issues.push(`Jam mulai dan selesai pada ${formatDate(bad.date)} tidak boleh sama.`)
     }
     if (delivery === 'delivery') {
         if (destination.trim().length < 3) issues.push('Isi alamat tujuan.')
@@ -206,6 +249,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
             fleetLabel: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
             distanceKm: shipping.status === 'ok' ? shipping.distance_km : null,
             input, result, notes, waNumber,
+            eventLabel: eventType ? EVENT_TYPE_LABEL[eventType] : undefined,
         })
         : null
 
@@ -218,8 +262,10 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
                 items: lines.map((l) => ({ product_id: l.product_id, name: l.name, qty: l.qty, category: l.category })),
                 start_date: startDate,
                 end_date: input.end_date,
-                start_time: hasGenset ? startTime : null,
-                end_time: hasGenset ? endTime : null,
+                start_time: hasGenset ? input.start_time : null,
+                end_time: hasGenset ? input.end_time : null,
+                day_hours: hasGenset && !sameHours ? dayHours : null,
+                event_type: eventType || null,
                 delivery,
                 destination: delivery === 'delivery' ? destination.trim() : null,
                 fleet: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
@@ -245,12 +291,13 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
         acCount, hasManualGenset, useGenset, setUseGenset, gensetActive, recKva, autoProduct, autoMissing, customKva,
         // tanggal & jam
         today, startDate, setStartDate, endDate, setEndDate, startTime, setStartTime, endTime, setEndTime, datesOk, timeError,
+        sameHours, setSameHours, dayList, dayTimes, setDayTime,
         // pengiriman
         delivery, setDeliveryChoice, destination, changeDestination, pickDestination, calculate, shipping, plan,
         // status pesanan & hasil
         hasRental, hasSales, hasGenset, result, issues, ready, draft, recordLead,
         // data pelanggan
-        name, setName,
+        name, setName, eventType, setEventType,
     }
 }
 

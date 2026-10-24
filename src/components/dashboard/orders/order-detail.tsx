@@ -1,5 +1,6 @@
 'use client'
 
+import { EVENT_LABEL } from '@/lib/validations/content'
 import { useState } from 'react'
 import Link from 'next/link'
 import { CalendarPlus, LockOpen, MapPin, MessageCircle, Pencil } from 'lucide-react'
@@ -40,7 +41,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function OrderDetail({
-  order, payments, history, role, updated, duplicate, allocation, schedules,
+  order, payments, history, role, updated, duplicate, allocation, schedules, created, focusAllocation, scheduleApplied, eventType,
 }: {
   order: OrderDetailData
   payments: PaymentRow[]
@@ -48,6 +49,10 @@ export function OrderDetail({
   role: AdminRole
   updated: boolean
   duplicate: boolean
+  created: string | null
+  focusAllocation: boolean
+  scheduleApplied: boolean
+  eventType: string | null
   allocation: AllocationData | null
   schedules: ScheduleRow[]
 }) {
@@ -87,7 +92,10 @@ export function OrderDetail({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{order.order_code}</h1>
-          <p className="text-sm text-muted-foreground">Dibuat {formatDateTime(order.created_at)}</p>
+          <p className="text-sm text-muted-foreground">
+            Dibuat {formatDateTime(order.created_at)}
+            {eventType && (EVENT_LABEL as Record<string, string>)[eventType] ? ` · ${(EVENT_LABEL as Record<string, string>)[eventType]}` : ''}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.status} />
@@ -114,6 +122,17 @@ export function OrderDetail({
         </div>
       </div>
 
+      {created && (
+        <div role="status" className="space-y-1 rounded-md bg-green-50 px-3 py-2 text-sm text-green-900">
+          <p>Pesanan <strong>{created}</strong> berhasil disimpan.</p>
+          {scheduleApplied && <p>Jam pemakaian genset dari pelanggan sudah masuk otomatis ke Jadwal Operasional. Cek di bagian bawah.</p>}
+          {focusAllocation && (
+            <p>
+              Langkah berikutnya: <a href="#alokasi" className="font-semibold underline underline-offset-2">atur alokasi unit</a> agar jadwal pemasangan aman.
+            </p>
+          )}
+        </div>
+      )}
       {updated && (
         <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">Pesanan berhasil diperbarui.</p>
       )}
@@ -235,7 +254,11 @@ export function OrderDetail({
               </Table>
             </div>
           </Section>
-          {allocation && <AllocationSection data={allocation} />}
+          {allocation && (
+            <div id="alokasi" className={focusAllocation ? 'scroll-mt-20 rounded-xl ring-2 ring-primary ring-offset-2' : 'scroll-mt-20'}>
+              <AllocationSection data={allocation} />
+            </div>
+          )}
 
           {/* 4. Jadwal operasional */}
           {order.hasRental && (

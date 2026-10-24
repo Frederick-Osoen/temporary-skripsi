@@ -9,6 +9,7 @@ import { safeAction } from '@/lib/action-client'
 import { normalizePhone } from '@/lib/phone'
 import { useDebouncedValue } from '@/lib/use-debounced-value'
 import type { OrderFormValues } from '@/lib/validations/order'
+import { EVENT_LABEL, EVENT_TYPES } from '@/lib/validations/content'
 import { FieldError, Section, selectClass } from './ui'
 
 type LookupState = 'idle' | 'searching' | 'found' | 'new' | 'error'
@@ -110,6 +111,14 @@ export function CustomerSection() {
             <option value="corporate">Corporate (B2B)</option>
           </select>
         </div>
+      </div>
+
+      <div className="space-y-2 sm:max-w-xs">
+        <Label htmlFor="event_type">Jenis acara / keperluan</Label>
+        <select id="event_type" className={selectClass} {...register('event_type', { setValueAs: (v) => (v === '' ? null : v) })}>
+          <option value="">Tidak diisi</option>
+          {EVENT_TYPES.map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
+        </select>
       </div>
     </Section>
   )

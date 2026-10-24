@@ -11,10 +11,10 @@ import { getAllocationData } from '@/lib/orders/allocation'
 
 export default async function OrderDetailPage({ params, searchParams }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ updated?: string; duplicate?: string }>
+  searchParams: Promise<{ updated?: string; duplicate?: string; created?: string; alokasi?: string; jadwal?: string }>
 }) {
   const { id } = await params
-  const { updated, duplicate } = await searchParams
+  const { updated, duplicate, created, alokasi, jadwal } = await searchParams
   if (!z.string().uuid().safeParse(id).success) notFound()
 
   const supabase = await createClient()
@@ -29,6 +29,9 @@ export default async function OrderDetailPage({ params, searchParams }: {
   if (!admin.ok) return <AuthProblem code={admin.code} message={admin.error} />
   if (orderRes.error) return <p className="text-sm text-destructive">Gagal memuat pesanan: {orderRes.error}</p>
   if (!orderRes.data) notFound()
+  // Jenis acara dibaca terpisah: bila fase-9a.sql belum dijalankan, halaman tetap tampil
+  const { data: ev } = await supabase.from('orders').select('event_type').eq('id', id).maybeSingle()
+  const eventType = (ev?.event_type as string | null | undefined) ?? null
   const allocationRes = await getAllocationData(supabase, orderRes.data)
   if (allocationRes.error) {
     return <p className="text-sm text-destructive">Gagal memuat alokasi unit: {allocationRes.error}</p>
@@ -40,7 +43,7 @@ export default async function OrderDetailPage({ params, searchParams }: {
   return (
     <div className="space-y-4">
       <Link href="/dashboard/orders" className="text-sm text-muted-foreground hover:underline">← Kembali ke daftar pesanan</Link>
-      <OrderDetail order={orderRes.data} payments={paymentsRes.data} history={historyRes.data} role={admin.role} updated={!!updated} duplicate={!!duplicate} allocation={allocationRes.data} schedules={scheduleRes.data} />
+      <OrderDetail order={orderRes.data} payments={paymentsRes.data} history={historyRes.data} role={admin.role} updated={!!updated} duplicate={!!duplicate} created={created ?? null} focusAllocation={!!alokasi} scheduleApplied={!!jadwal} eventType={eventType} allocation={allocationRes.data} schedules={scheduleRes.data} />
     </div>
   )
 }

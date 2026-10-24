@@ -11,12 +11,14 @@ export function buildWhatsAppDraft(args: {
   result: EstimateResult
   notes?: string[]
   waNumber?: string
+  eventLabel?: string
 }): { text: string; url: string } {
-  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER } = args
+  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER, eventLabel } = args
   const L: string[] = []
 
   L.push(`Halo ${STORE_NAME}, saya ingin ${result.hasRental ? 'menyewa' : 'membeli'} berikut:`)
   if (name.trim()) L.push(`*Nama:* ${name.trim()}`)
+  if (eventLabel) L.push(`*Jenis acara:* ${eventLabel}`)
   L.push('')
 
   L.push('*Item:*')
@@ -29,8 +31,13 @@ export function buildWhatsAppDraft(args: {
         (input.end_date !== input.start_date ? ` – ${formatDate(input.end_date)}` : '') +
         ` (${result.days} hari)`
     )
-    if (result.hoursPerDay !== null && input.lines.some((l) => l.capacity_kva !== null)) {
-      L.push(`*Jam pemakaian genset:* ${input.start_time} – ${input.end_time} (${result.hoursPerDay} jam/hari)`)
+    if (input.lines.some((l) => l.capacity_kva !== null)) {
+      if (result.hoursVary && input.day_hours) {
+        L.push('*Jam pemakaian genset per hari:*')
+        for (const d of input.day_hours.slice(0, 31)) L.push(`- ${formatDate(d.date)}: ${d.start} – ${d.end}`)
+      } else if (result.hoursPerDay !== null) {
+        L.push(`*Jam pemakaian genset:* ${input.start_time} – ${input.end_time} (${result.hoursPerDay} jam/hari)`)
+      }
     }
   } else {
     L.push(`*Tanggal:* ${formatDate(input.start_date)}`)

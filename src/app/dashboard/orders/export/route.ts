@@ -39,7 +39,12 @@ export async function GET(request: Request) {
   const { data, error } = await q
   if (error) return new NextResponse('Gagal mengekspor', { status: 500 })
 
-  const head = ['Kode', 'Dibuat', 'Status', 'Pelanggan', 'No. WA', 'Mulai', 'Selesai', 'Tujuan', 'Armada', 'Ongkir', 'BBM', 'Tol', 'Lembur', 'Total']
+  // Jenis acara dibaca terpisah (kolom dari fase-9a.sql); bila belum ada, kolomnya kosong
+  const evById = new Map<string, string>()
+  const { data: evRows } = await supabase.from('orders').select('order_code, event_type').limit(5000)
+  for (const r of evRows ?? []) if (r.event_type) evById.set(r.order_code as string, r.event_type as string)
+
+  const head = ['Kode', 'Dibuat', 'Status', 'Pelanggan', 'No. WA', 'Mulai', 'Selesai', 'Tujuan', 'Armada', 'Ongkir', 'BBM', 'Tol', 'Lembur', 'Total', 'Jenis acara']
   const rows = (data ?? []).map((o) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = o as any
@@ -47,7 +52,7 @@ export async function GET(request: Request) {
     return [
       r.order_code, String(r.created_at).slice(0, 10), STATUS_LABEL[r.status as OrderStatus] ?? r.status,
       c?.name, c?.phone_number, r.start_date, r.end_date, r.destination, r.fleet_type,
-      r.shipping_fee, r.fuel_fee, r.toll_fee, r.overtime_fee, r.total_amount,
+      r.shipping_fee, r.fuel_fee, r.toll_fee, r.overtime_fee, r.total_amount, evById.get(r.order_code) ?? '',
     ].map(esc).join(',')
   })
   const csv = '﻿' + [head.join(','), ...rows].join('\r\n')

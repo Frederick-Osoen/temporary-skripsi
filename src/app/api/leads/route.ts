@@ -29,6 +29,11 @@ const leadSchema = z.object({
     end_date: z.string().max(10),
     start_time: z.string().max(5).nullable(),
     end_time: z.string().max(5).nullable(),
+    day_hours: z
+      .array(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) }))
+      .max(90)
+      .nullish(),
+    event_type: z.enum(['pernikahan', 'korporat', 'pabrik', 'ulang_tahun', 'lainnya']).nullish(),
     delivery: z.enum(['delivery', 'store_pickup']),
     destination: z.string().trim().max(200).nullable(),
     fleet: z.string().max(100).nullable(),

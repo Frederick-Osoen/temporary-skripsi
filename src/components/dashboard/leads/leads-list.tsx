@@ -95,7 +95,10 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
                     {isRental ? 'Acara: ' : 'Tanggal: '}
                     {formatDate(p.start_date)}
                     {p.end_date && p.end_date !== p.start_date ? ` – ${formatDate(p.end_date)}` : ''}
-                    {p.start_time && p.end_time ? ` · jam ${p.start_time}–${p.end_time}` : ''}
+                    {p.day_hours && p.day_hours.length > 0
+                      ? ' · jam genset berbeda tiap hari'
+                      : p.start_time && p.end_time ? ` · jam ${p.start_time}–${p.end_time}` : ''}
+                    {p.event_type ? ` · ${p.event_type.replace('_', ' ')}` : ''}
                   </p>
                 )}
                 {p?.delivery === 'store_pickup' && <p>Diambil di toko</p>}

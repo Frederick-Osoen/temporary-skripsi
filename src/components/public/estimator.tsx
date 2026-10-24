@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, Info, MessageCircle, Minus, Plus, Search, Trash2, Truck, Store } from 'lucide-react'
+import { Check, Info, MessageCircle, Minus, Plus, Search, Trash2, Truck, Store, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { STANDARD_HOURS } from '@/lib/orders/schedule'
-import { formatRupiah, lineSubtotal } from '@/lib/orders/utils'
+import { TimeInput } from '@/components/ui/time-input'
+import { calcHours, STANDARD_HOURS } from '@/lib/orders/schedule'
+import { EVENT_TYPE_LABEL, type EventType } from '@/lib/public/content-types'
+import { formatDate, formatRupiah, lineSubtotal } from '@/lib/orders/utils'
 import { fleetPlanLabel } from '@/lib/public/fleet'
 import { MAX_QTY, useEstimator, type EstimatorProps } from '@/lib/public/use-estimator'
 import { cn } from '@/lib/utils'
@@ -51,7 +53,8 @@ export function Estimator(props: EstimatorProps) {
     today, startDate, setStartDate, endDate, setEndDate, startTime, setStartTime, endTime, setEndTime, datesOk, timeError,
     delivery, setDeliveryChoice, destination, changeDestination, pickDestination, calculate, shipping, plan,
     hasRental, hasSales, hasGenset, result, issues, ready, draft, recordLead,
-    name, setName,
+    name, setName, eventType, setEventType,
+    sameHours, setSameHours, dayList, dayTimes, setDayTime,
   } = useEstimator(props)
 
   // State khusus tampilan: pencarian di daftar produk (tidak menyentuh logika estimasi)
@@ -85,7 +88,7 @@ export function Estimator(props: EstimatorProps) {
   // Hanya untuk penanda kemajuan (tampilan); kesiapan sebenarnya tetap dari `ready`
   const done = [
     rows.length > 0,
-    rows.length > 0 && datesOk && !timeError && (!hasGenset || (startTime !== '' && endTime !== '')),
+    rows.length > 0 && datesOk && !timeError,
     rows.length > 0 && (delivery === 'store_pickup' || shipping.status === 'ok' || shipping.status === 'unavailable'),
     ready && !timeError,
   ]
@@ -204,6 +207,44 @@ export function Estimator(props: EstimatorProps) {
               </ul>
             )}
 
+            {/* Helper genset: tepat di bawah daftar pilihan, sebelum pencarian produk */}
+            {acCount > 0 && !hasManualGenset && (
+              <div className={cn('space-y-2 rounded-xl border p-4 transition-colors', useGenset ? 'border-volt bg-volt/10' : 'border-volt/40 bg-volt/5')}>
+                <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={useGenset}
+                    onChange={(e) => setUseGenset(e.target.checked)}
+                    className="mt-0.5 size-5 rounded border-input accent-primary"
+                  />
+                  <span className="flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <Zap className="size-4 text-volt-foreground" aria-hidden="true" /> Butuh genset untuk AC-nya?
+                    </span>
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                      Centang untuk sekalian sewa genset. Kapasitas kVA dihitung otomatis dari {acCount} unit AC yang Anda pilih.
+                    </span>
+                  </span>
+                </label>
+                {gensetActive && recKva !== null && autoProduct && (
+                  <p className="tnum text-xs text-muted-foreground">
+                    Rekomendasi untuk {acCount} unit AC: {recKva} kVA. Butuh kapasitas lain? Tambahkan genset sendiri dari
+                    daftar produk.
+                  </p>
+                )}
+                {gensetActive && autoMissing && (
+                  <p className="text-xs text-warning">
+                    Kebutuhan {recKva} kVA belum tersedia di katalog online. Admin akan membantu lewat WhatsApp.
+                  </p>
+                )}
+                {customKva && (
+                  <p className="text-xs text-warning">
+                    Lebih dari 20 unit AC membutuhkan <strong>kapasitas genset custom</strong>. Konsultasikan lewat WhatsApp.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Daftar produk yang bisa ditambahkan */}
             <div className="rounded-lg border">
               <div className="relative border-b">
@@ -256,41 +297,6 @@ export function Estimator(props: EstimatorProps) {
               </div>
             </div>
 
-            {/* Helper genset */}
-            {acCount > 0 && !hasManualGenset && (
-              <div className="space-y-2 rounded-lg border border-volt/30 bg-volt/5 p-3.5">
-                <label className="flex items-start gap-2.5 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    checked={useGenset}
-                    onChange={(e) => setUseGenset(e.target.checked)}
-                    className="mt-0.5 size-4 rounded border-input"
-                  />
-                  <span>
-                    Sekalian sewa genset
-                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                      Kapasitas kVA dihitung otomatis dari {acCount} unit AC yang Anda pilih.
-                    </span>
-                  </span>
-                </label>
-                {gensetActive && recKva !== null && autoProduct && (
-                  <p className="tnum text-xs text-muted-foreground">
-                    Rekomendasi untuk {acCount} unit AC: {recKva} kVA. Butuh kapasitas lain? Tambahkan genset sendiri dari
-                    daftar produk.
-                  </p>
-                )}
-                {gensetActive && autoMissing && (
-                  <p className="text-xs text-warning">
-                    Kebutuhan {recKva} kVA belum tersedia di katalog online. Admin akan membantu lewat WhatsApp.
-                  </p>
-                )}
-                {customKva && (
-                  <p className="text-xs text-warning">
-                    Lebih dari 20 unit AC membutuhkan <strong>kapasitas genset custom</strong>. Konsultasikan lewat WhatsApp.
-                  </p>
-                )}
-              </div>
-            )}
           </Panel>
 
           {/* ---------- 2. Jadwal ---------- */}
@@ -325,24 +331,59 @@ export function Estimator(props: EstimatorProps) {
             )}
 
             {hasGenset && (
-              <div className="space-y-2.5 border-t pt-4">
-                <div className="grid max-w-sm grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_time">
-                      Jam mulai <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="start_time" type="time" value={startTime} required onChange={(e) => setStartTime(e.target.value)} />
+              <div className="space-y-3 border-t pt-4">
+                <p className="text-sm font-medium">Jam pemakaian genset <span className="text-destructive">*</span></p>
+
+                {dayList.length > 1 && (
+                  <div role="group" aria-label="Cara mengisi jam" className="inline-flex rounded-full border p-0.5 text-sm">
+                    {([true, false] as const).map((same) => (
+                      <button
+                        key={String(same)}
+                        type="button"
+                        aria-pressed={sameHours === same}
+                        onClick={() => setSameHours(same)}
+                        className={cn(
+                          'h-8 rounded-full px-3.5 transition-colors',
+                          sameHours === same ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {same ? 'Sama setiap hari' : 'Berbeda tiap hari'}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end_time">
-                      Jam selesai <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="end_time" type="time" value={endTime} required onChange={(e) => setEndTime(e.target.value)} />
+                )}
+
+                {sameHours || dayList.length <= 1 ? (
+                  <div className="grid max-w-md grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_time">Jam mulai</Label>
+                      <TimeInput id="start_time" value={startTime} onChange={setStartTime} required presets={['08:00', '12:00', '18:00']} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="end_time">Jam selesai</Label>
+                      <TimeInput id="end_time" value={endTime} onChange={setEndTime} required presets={['17:00', '22:00', '00:00']} />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {dayList.map((d) => {
+                      const r = dayTimes[d] ?? { start: '', end: '' }
+                      const h = r.start && r.end ? calcHours(r.start, r.end) : null
+                      return (
+                        <li key={d} className="grid items-center gap-2 rounded-lg border p-2.5 sm:grid-cols-[8.5rem_1fr_1fr_6rem]">
+                          <p className="text-sm font-medium">{formatDate(d)}</p>
+                          <TimeInput aria-label={`Jam mulai ${formatDate(d)}`} value={r.start} onChange={(v) => setDayTime(d, { start: v })} />
+                          <TimeInput aria-label={`Jam selesai ${formatDate(d)}`} value={r.end} onChange={(v) => setDayTime(d, { end: v })} />
+                          <p className="tnum text-xs text-muted-foreground">{h === null ? (r.start && r.end ? 'Tidak valid' : 'Belum diisi') : `${h} jam`}</p>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Jam ini dianggap sama setiap hari. Standar pemakaian genset {STANDARD_HOURS} jam per hari; lebih dari itu
-                  dikenai overtime per jam, dibulatkan ke atas.
+                  Standar pemakaian genset {STANDARD_HOURS} jam per hari; lebih dari itu dikenai overtime per jam, dibulatkan ke
+                  atas. Jam selesai lebih kecil dari jam mulai berarti melewati tengah malam.
                 </p>
                 {timeError && (
                   <p role="alert" className="text-xs font-medium text-destructive">
@@ -472,11 +513,27 @@ export function Estimator(props: EstimatorProps) {
             )}
           </Panel>
 
-          {/* ---------- 4. Nama ---------- */}
-          <Panel step={4} title="Nama Anda" hint="Opsional. Membantu admin mengenali pesanan saat Anda chat.">
-            <div className="max-w-sm space-y-2">
-              <Label htmlFor="cust_name">Nama atau nama perusahaan</Label>
-              <Input id="cust_name" maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Misal: Budi / CV Sejahtera" />
+          {/* ---------- 4. Nama & jenis acara ---------- */}
+          <Panel step={4} title="Tentang Anda" hint="Opsional. Membantu admin mengenali pesanan dan menyiapkan unit yang tepat.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="cust_name">Nama atau nama perusahaan</Label>
+                <Input id="cust_name" maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="Misal: Budi / CV Sejahtera" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event_type">Jenis acara / keperluan</Label>
+                <select
+                  id="event_type"
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value as EventType | '')}
+                  className="h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <option value="">Pilih (opsional)</option>
+                  {(Object.keys(EVENT_TYPE_LABEL) as EventType[]).map((t) => (
+                    <option key={t} value={t}>{EVENT_TYPE_LABEL[t]}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </Panel>
         </div>

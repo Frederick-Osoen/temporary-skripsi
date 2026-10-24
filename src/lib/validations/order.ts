@@ -41,6 +41,7 @@ export const orderFormSchema = z
         start_date: dateStr,
         end_date: dateStr,
         setup_date: dateStr,
+        event_type: z.enum(['pernikahan', 'korporat', 'pabrik', 'ulang_tahun', 'lainnya']).nullish(),
         items: z.array(orderItemSchema).min(1, 'Tambahkan minimal satu produk').max(50, 'Maksimal 50 produk'),
         shipping: shippingSchema,
     })

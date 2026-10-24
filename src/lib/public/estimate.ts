@@ -16,8 +16,10 @@ export type EstimateInput = {
   lines: EstimateLine[]
   start_date: string
   end_date: string
-  start_time: string // satu pasang jam untuk semua hari (HH:MM)
+  start_time: string // jam bawaan (HH:MM), dipakai bila day_hours tidak diberikan
   end_time: string
+  // Jam per hari (opsional). Bila ada, menggantikan start_time/end_time untuk perhitungan overtime.
+  day_hours?: { date: string; start: string; end: string }[]
   delivery: 'delivery' | 'store_pickup'
   plan: FleetPlan
   // hasil /api/distance: biaya satu kendaraan per jenis (null = tidak bisa dipastikan)
@@ -30,6 +32,8 @@ export type EstimateResult = {
   itemsTotal: number
   hoursPerDay: number | null
   overtimeHoursPerDay: number
+  overtimeHoursTotal: number // jumlah overtime semua hari (jam)
+  hoursVary: boolean // jam berbeda antar hari
   overtimeFee: number
   overtimeUnpriced: boolean
   shippingFee: number | null
@@ -48,11 +52,30 @@ export function calcEstimate(input: EstimateInput): EstimateResult {
   )
 
   // Sama dengan SQL calc_overtime_fee: jam ditagih dibulatkan ke atas per hari x tarif semua unit
-  const hours = hasRental && input.start_time && input.end_time ? calcHours(input.start_time, input.end_time) : null
-  const overtimePerDay = hours === null ? 0 : overtimeOf(hours)
   const ratePerHour = rental.reduce((s, l) => s + (l.overtime_rate === null ? 0 : l.qty * l.overtime_rate), 0)
-  const overtimeFee = billableHours(overtimePerDay) * days * ratePerHour
-  const overtimeUnpriced = overtimePerDay > 0 && rental.some((l) => l.capacity_kva !== null && l.overtime_rate === null)
+  let hours: number | null = null // jam/hari bila seragam
+  let overtimePerDay = 0
+  let overtimeTotal = 0
+  let billable = 0
+  let hoursVary = false
+
+  if (hasRental && input.day_hours && input.day_hours.length > 0) {
+    const per = input.day_hours.map((d) => (d.start && d.end ? calcHours(d.start, d.end) : null))
+    const valid = per.filter((h): h is number => h !== null)
+    const ots = valid.map(overtimeOf)
+    overtimeTotal = ots.reduce((a, b) => a + b, 0)
+    billable = ots.reduce((a, o) => a + billableHours(o), 0)
+    hoursVary = new Set(valid).size > 1
+    hours = !hoursVary && valid.length > 0 ? valid[0] : null
+    overtimePerDay = !hoursVary && valid.length > 0 ? ots[0] : 0
+  } else {
+    hours = hasRental && input.start_time && input.end_time ? calcHours(input.start_time, input.end_time) : null
+    overtimePerDay = hours === null ? 0 : overtimeOf(hours)
+    overtimeTotal = overtimePerDay * days
+    billable = billableHours(overtimePerDay) * days
+  }
+  const overtimeFee = billable * ratePerHour
+  const overtimeUnpriced = overtimeTotal > 0 && rental.some((l) => l.capacity_kva !== null && l.overtime_rate === null)
 
   let shippingFee: number | null = 0
   let shippingPending = false
@@ -80,6 +103,8 @@ export function calcEstimate(input: EstimateInput): EstimateResult {
     hasRental, days, itemsTotal,
     hoursPerDay: hours,
     overtimeHoursPerDay: overtimePerDay,
+    overtimeHoursTotal: overtimeTotal,
+    hoursVary,
     overtimeFee, overtimeUnpriced,
     shippingFee, shippingPending,
     total: itemsTotal + (shippingFee ?? 0) + overtimeFee,

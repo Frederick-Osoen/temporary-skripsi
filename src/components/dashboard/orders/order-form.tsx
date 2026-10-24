@@ -128,10 +128,14 @@ export function OrderForm({ products, lead, mode = 'create', initialValues, orde
       } else {
         const res = await safeAction(() => createOrder(data, requestId, lead?.id))
         if (res.ok) {
+          const d = res.data
+          // Pesanan yang butuh unit langsung diarahkan ke halaman detail supaya alokasi tidak terlewat
           router.push(
-            res.data.duplicate
-              ? `/dashboard/orders/${res.data.id}?duplicate=1`
-              : `/dashboard/orders?created=${encodeURIComponent(res.data.code)}`
+            d.duplicate
+              ? `/dashboard/orders/${d.id}?duplicate=1`
+              : d.needsAllocation
+                ? `/dashboard/orders/${d.id}?created=${encodeURIComponent(d.code)}&alokasi=1${d.scheduleApplied ? '&jadwal=1' : ''}`
+                : `/dashboard/orders?created=${encodeURIComponent(d.code)}`
           )
           return
         }
