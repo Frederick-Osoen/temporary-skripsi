@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Download, Plus, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Plus, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -11,6 +11,22 @@ import { ORDER_STATUSES, STATUS_LABEL, type OrderStatus } from '@/lib/orders/sta
 import { OrderStatusBadge } from '@/components/dashboard/orders/status-badge'
 
 const PAGE_SIZE = 20
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
+const monthLabel = (ym: string) => `${MONTHS[Number(ym.slice(5)) - 1]} ${ym.slice(0, 4)}`
+function shiftMonth(ym: string, delta: number) {
+  const [y, m] = ym.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+function monthRange(ym: string) {
+  const [y, m] = ym.split('-').map(Number)
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return { first: `${ym}-01`, last: `${ym}-${String(last).padStart(2, '0')}` }
+}
+// Hari ini menurut WIB
+const todayYm = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 7)
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 type Row = {
@@ -33,6 +49,7 @@ type SearchParams = {
   to?: string
   sort?: string
   page?: string
+  bulan?: string
 }
 
 const selectClass =
@@ -60,6 +77,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const to = sp.to && DATE_RE.test(sp.to) ? sp.to : ''
   const sort = sp.sort === 'event' ? 'event' : 'new'
   const page = Math.max(1, Math.floor(Number(sp.page)) || 1)
+  const bulan = sp.bulan && MONTH_RE.test(sp.bulan) ? sp.bulan : ''
+  const range = bulan ? monthRange(bulan) : null
 
   const supabase = await createClient()
 
@@ -91,6 +110,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   if (orFilter) query = query.or(orFilter)
   if (from) query = query.gte('end_date', from)
   if (to) query = query.lte('start_date', to)
+  if (range) query = query.gte('start_date', range.first).lte('start_date', range.last)
 
   query = sort === 'event'
     ? query.order('start_date', { ascending: false }).order('created_at', { ascending: false })
@@ -118,8 +138,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const allocById = new Map((allocRows ?? []).map((a) => [a.order_id, a]))
 
   // Bangun URL yang mempertahankan filter lain
+  // Ringkasan bulan terpilih (seluruh pesanan bulan itu, tidak terpengaruh filter status/pencarian)
+  let summary: { n: number; value: number; done: number; cancelled: number; open: number } | null = null
+  if (range) {
+    const { data: mrows } = await supabase
+      .from('orders').select('status, total_amount').gte('start_date', range.first).lte('start_date', range.last).limit(5000)
+    const rows = mrows ?? []
+    summary = {
+      n: rows.length,
+      value: rows.filter((r) => r.status !== 'cancelled').reduce((a, r) => a + Number(r.total_amount), 0),
+      done: rows.filter((r) => r.status === 'completed').length,
+      cancelled: rows.filter((r) => r.status === 'cancelled').length,
+      open: rows.filter((r) => r.status !== 'completed' && r.status !== 'cancelled').length,
+    }
+  }
+
   const href = (over: Partial<Record<keyof SearchParams, string>>) => {
-    const merged: Record<string, string> = { status, q, from, to, sort, page: '1', ...over }
+    const merged: Record<string, string> = { status, q, from, to, sort, bulan, page: '1', ...over }
     const params = new URLSearchParams()
     for (const [k, v] of Object.entries(merged)) {
       if (!v || (k === 'status' && v === 'all') || (k === 'sort' && v === 'new') || (k === 'page' && v === '1')) continue
@@ -134,7 +169,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     { key: 'active', label: 'Aktif', n: active },
     ...ORDER_STATUSES.map((s) => ({ key: s, label: STATUS_LABEL[s as OrderStatus], n: counts[s] ?? 0 })),
   ]
-  const hasFilter = !!(q || from || to || status !== 'all' || sort !== 'new')
+  const hasFilter = !!(q || from || to || bulan || status !== 'all' || sort !== 'new')
+  const baseYm = bulan || todayYm()
 
   return (
     <div className="space-y-4">
@@ -144,7 +180,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <p className="text-sm text-muted-foreground">{matched} pesanan{hasFilter ? ' sesuai filter' : ''}.</p>
         </div>
         <div className="flex items-center gap-2">
-          <a href={`/dashboard/orders/export${sp.status && sp.status !== 'all' && sp.status !== 'active' ? `?status=${sp.status}` : ''}`} className={buttonVariants({ variant: 'outline' })}>
+          <a href={`/dashboard/orders/export${(() => {
+            const ps = new URLSearchParams()
+            if (sp.status && sp.status !== 'all' && sp.status !== 'active') ps.set('status', sp.status)
+            if (bulan) ps.set('bulan', bulan)
+            const t = ps.toString()
+            return t ? `?${t}` : ''
+          })()}`} className={buttonVariants({ variant: 'outline' })}>
             <Download className="mr-2 h-4 w-4" /> CSV
           </a>
           <Link href="/dashboard/orders/new" className={buttonVariants()}>
@@ -157,6 +199,45 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
           Pesanan <strong>{sp.created}</strong> berhasil disimpan.
         </p>
+      )}
+
+      {/* Navigasi bulan */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center rounded-full border bg-background">
+          <Link href={href({ bulan: shiftMonth(baseYm, -1) })} aria-label="Bulan sebelumnya" className="flex h-9 w-9 items-center justify-center rounded-l-full hover:bg-muted">
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <span className="min-w-36 px-2 text-center text-sm font-medium" aria-live="polite">{bulan ? monthLabel(bulan) : 'Semua bulan'}</span>
+          <Link href={href({ bulan: shiftMonth(baseYm, 1) })} aria-label="Bulan berikutnya" className="flex h-9 w-9 items-center justify-center rounded-r-full hover:bg-muted">
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+        {bulan ? (
+          <Link href={href({ bulan: '' })} className="text-sm text-primary underline-offset-4 hover:underline">Tampilkan semua bulan</Link>
+        ) : (
+          <Link href={href({ bulan: todayYm() })} className="text-sm text-primary underline-offset-4 hover:underline">Bulan ini</Link>
+        )}
+      </div>
+
+      {summary && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border bg-background p-3">
+            <p className="text-xl font-bold tabular-nums">{summary.n}</p>
+            <p className="text-xs text-muted-foreground">Pesanan bulan ini</p>
+          </div>
+          <div className="rounded-xl border bg-background p-3">
+            <p className="text-xl font-bold tabular-nums">{formatRupiah(summary.value)}</p>
+            <p className="text-xs text-muted-foreground">Nilai (tanpa yang batal)</p>
+          </div>
+          <div className="rounded-xl border bg-background p-3">
+            <p className="text-xl font-bold tabular-nums">{summary.open}</p>
+            <p className="text-xs text-muted-foreground">Masih berjalan</p>
+          </div>
+          <div className="rounded-xl border bg-background p-3">
+            <p className="text-xl font-bold tabular-nums">{summary.done}<span className="text-sm font-normal text-muted-foreground"> selesai · {summary.cancelled} batal</span></p>
+            <p className="text-xs text-muted-foreground">Hasil bulan ini</p>
+          </div>
+        </div>
       )}
 
       {/* Chip status: bisa digeser di HP */}
@@ -182,6 +263,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       {/* Pencarian, rentang tanggal acara, urutan (GET: URL bisa dibagikan, tanpa JS) */}
       <form method="get" action="/dashboard/orders" className="grid gap-2 rounded-xl border bg-background p-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]">
         {status !== 'all' && <input type="hidden" name="status" value={status} />}
+        {bulan && <input type="hidden" name="bulan" value={bulan} />}
         <div className="relative sm:col-span-2 lg:col-span-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input name="q" defaultValue={q} placeholder="Cari kode, nama, telepon, atau tujuan..." className="pl-8" aria-label="Cari pesanan" />
