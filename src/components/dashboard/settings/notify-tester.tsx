@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { sendTestEmail, testCalendar, type TestResult } from '@/app/dashboard/settings/notify-actions'
+import { removeTestEvent, sendTestEmail, testCalendar, type TestResult } from '@/app/dashboard/settings/notify-actions'
 import { safeAction } from '@/lib/action-client'
 
 export function NotifyTester({ status }: { status: { label: string; ok: boolean; hint: string }[] }) {
@@ -39,6 +39,9 @@ export function NotifyTester({ status }: { status: { label: string; ok: boolean;
         <Button type="button" variant="outline" disabled={pending} onClick={() => run('Email uji', sendTestEmail)}>Kirim email uji</Button>
         <Button type="button" variant="outline" disabled={pending} onClick={() => run('Uji kalender', testCalendar)}>Uji Google Calendar</Button>
       </div>
+      {result?.r.eventId && (
+        <Button type="button" variant="secondary" disabled={pending} onClick={() => run('Hapus event uji', () => removeTestEvent(result.r.eventId!))}>Hapus event uji</Button>
+      )}
       {pending && <p className="text-sm text-muted-foreground">Menguji…</p>}
       {result && (
         <div role="status" className={`space-y-1 rounded-md px-3 py-2 text-sm ${result.r.ok ? 'bg-green-50 text-green-800' : 'bg-destructive/10 text-destructive'}`}>

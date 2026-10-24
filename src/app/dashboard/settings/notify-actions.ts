@@ -6,7 +6,7 @@ import { opsRecipients, ownerRecipients } from '@/lib/notify/recipients'
 import { logMail, sendEmail } from '@/lib/notify/resend'
 import { layout, SITE } from '@/lib/notify/templates'
 
-export type TestResult = { ok: boolean; lines: string[] }
+export type TestResult = { ok: boolean; lines: string[]; eventId?: string }
 
 // Hanya menampilkan ADA/TIDAK ADA, tidak pernah nilainya.
 export async function getNotifyStatus(): Promise<{ label: string; ok: boolean; hint: string }[]> {
@@ -51,11 +51,23 @@ export async function testCalendar(): Promise<TestResult> {
     if (!ctx.ok) return { ok: false, lines: [ctx.error] }
     if (!calendarConfigured()) return { ok: false, lines: ['Env Google Calendar belum lengkap (lihat daftar di atas).'] }
     const date = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10)
-    const id = await createEvent({ summary: 'Uji sinkron JJ Teknik (boleh dihapus)', description: 'Event uji dari Dashboard > Pengaturan.', date, colorId: '9', orderId: 'uji' })
-    await deleteEvent(id)
-    return { ok: true, lines: ['Berhasil: event uji dibuat lalu dihapus dari kalender. Sinkron berfungsi.'] }
+    const id = await createEvent({ summary: 'UJI SINKRON JJ Teknik (boleh dihapus)', description: 'Event uji dari Dashboard > Pengaturan.', date, colorId: '9', orderId: 'uji' })
+    return { ok: true, eventId: id, lines: [`Berhasil: event biru "UJI SINKRON JJ Teknik" dibuat di kalender untuk hari ini (${date}). Buka Google Calendar untuk melihatnya, lalu tekan "Hapus event uji".`] }
   } catch (err) {
     console.error('[settings] uji kalender:', err)
+    return { ok: false, lines: [err instanceof Error ? err.message : 'Gagal.'] }
+  }
+}
+
+export async function removeTestEvent(eventId: string): Promise<TestResult> {
+  try {
+    const ctx = await requireOwner()
+    if (!ctx.ok) return { ok: false, lines: [ctx.error] }
+    if (typeof eventId !== 'string' || !/^[a-z0-9]{5,100}$/i.test(eventId)) return { ok: false, lines: ['ID event tidak valid.'] }
+    await deleteEvent(eventId)
+    return { ok: true, lines: ['Event uji dihapus dari kalender.'] }
+  } catch (err) {
+    console.error('[settings] hapus event uji:', err)
     return { ok: false, lines: [err instanceof Error ? err.message : 'Gagal.'] }
   }
 }
