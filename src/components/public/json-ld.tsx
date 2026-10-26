@@ -28,7 +28,7 @@ export function localBusinessLd(waNumber: string) {
       postalCode: BUSINESS.postalCode,
       addressCountry: BUSINESS.country,
     },
-    areaServed: BUSINESS.serviceArea,
+    areaServed: ['Jawa', 'Bali', 'Lombok'],
     hasMap: BUSINESS.mapsUrl,
     contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', url: `https://wa.me/${waNumber}` },
   }

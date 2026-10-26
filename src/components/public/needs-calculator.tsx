@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { recommendKva, type GensetRule } from '@/lib/public/genset'
-import { estimateNeeds, VENUE_LABEL, type Venue } from '@/lib/public/needs'
+import { estimateNeeds, MANUAL_ABOVE, VENUE_LABEL, type Venue } from '@/lib/public/needs'
 import { waLink } from '@/lib/public/business'
 import { cn } from '@/lib/utils'
 
@@ -85,14 +85,15 @@ export function NeedsCalculator({
   const [people, setPeople] = useState(200)
 
   const res = estimateNeeds({ areaM2: area, people, venue })
-  const kva = res.acUnits > 0 ? recommendKva(res.acUnits, rules) : null
+  const manual = res.acUnits > MANUAL_ABOVE
+  const kva = res.acUnits > 0 && !manual ? recommendKva(res.acUnits, rules) : null
   const shown = Math.min(res.acUnits, MAX_ICONS)
 
   const message =
     `Halo JJ Teknik, saya ingin konsultasi kebutuhan AC.\n` +
     `Tempat: ${VENUE_LABEL[venue]}\nLuas: ±${area} m²\nTamu: ±${people} orang\n` +
     `Perkiraan dari kalkulator situs: ${res.acUnits} unit AC ${res.pk} PK` +
-    (kva ? `, genset ${kva} kVA` : '')
+    (kva ? `, genset ${kva} kVA` : manual ? ', kebutuhan besar (perlu dihitung manual)' : '')
 
   return (
     <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
@@ -147,7 +148,7 @@ export function NeedsCalculator({
           <div>
             <dt className={night ? 'text-white/60' : 'text-muted-foreground'}>Genset yang disarankan</dt>
             <dd className={cn('num mt-1 text-2xl font-semibold', night ? 'text-volt' : 'text-ink')}>
-              {kva ? `${kva} kVA` : res.acUnits === 0 ? '-' : rules.length === 0 ? 'Dihitung admin' : 'Custom'}
+              {kva ? `${kva} kVA` : res.acUnits === 0 ? '-' : manual ? 'Biasanya 250 kVA' : rules.length === 0 ? 'Dihitung admin' : 'Custom'}
             </dd>
           </div>
           <div>
@@ -159,8 +160,9 @@ export function NeedsCalculator({
         </dl>
 
         <p className={cn('mt-5 text-xs leading-relaxed', night ? 'text-white/55' : 'text-muted-foreground')}>
-          Ini perkiraan kasar. Tinggi atap, ventilasi, dan jam acara ikut menentukan; admin akan memastikan jumlah
-          finalnya.
+          {manual
+            ? `Kebutuhan di atas ${MANUAL_ABOVE} unit AC dihitung manual oleh admin (umumnya memakai genset 250 kVA). Kirim hasil ini ke admin untuk dihitung bersama.`
+            : 'Ini perkiraan kasar. Tinggi atap, ventilasi, dan jam acara ikut menentukan; admin akan memastikan jumlah finalnya.'}
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2.5">

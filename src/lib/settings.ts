@@ -10,6 +10,10 @@ export type StoreSettings = {
   store_phone: string
   opening_hours: string // satu baris per hari, mis. "Senin–Sabtu: 08.00–17.00"
   notify_emails: string // dipisah koma; kosong = pakai NOTIFY_EMAILS dari .env
+  // Kolom dari fase-9e.sql. Kosong = tidak ditampilkan di situs.
+  contact_email: string
+  instagram_url: string
+  tiktok_url: string
 }
 
 // Dipakai bila tabel belum ada / gagal dibaca, supaya situs publik tidak ikut mati.
@@ -20,6 +24,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   store_phone: '',
   opening_hours: '',
   notify_emails: '',
+  contact_email: '',
+  instagram_url: '',
+  tiktok_url: '',
 }
 
 // Baris "Hari: jam" -> daftar untuk ditampilkan. Baris tanpa titik dua tampil sebagai satu teks.
@@ -44,6 +51,9 @@ export function rowToSettings(data: Record<string, unknown> | null | undefined):
     store_phone: String(data.store_phone ?? ''),
     opening_hours: String(data.opening_hours ?? ''),
     notify_emails: String(data.notify_emails ?? ''),
+    contact_email: String(data.contact_email ?? ''),
+    instagram_url: String(data.instagram_url ?? ''),
+    tiktok_url: String(data.tiktok_url ?? ''),
   }
 }
 

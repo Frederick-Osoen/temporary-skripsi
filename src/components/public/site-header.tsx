@@ -16,6 +16,7 @@ const NAV = [
   { href: '/katalog', label: 'Katalog' },
   { href: '/kalkulator', label: 'Kalkulator' },
   { href: '/galeri', label: 'Galeri' },
+  { href: '/artikel', label: 'Artikel' },
   { href: '/tentang', label: 'Tentang' },
   { href: '/kontak', label: 'Kontak' },
 ]
@@ -23,7 +24,6 @@ const MOBILE_EXTRA = [
   { href: '/', label: 'Beranda' },
   { href: '/estimasi', label: 'Estimasi biaya' },
   { href: '/testimoni', label: 'Testimoni' },
-  { href: '/artikel', label: 'Artikel' },
 ]
 
 // Halaman yang dibuka dengan band malam: header ikut gelap sampai digulir.

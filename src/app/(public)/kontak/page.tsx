@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ContactPage() {
-  const { wa_number, opening_hours, store_phone } = await getStoreSettings()
+  const { wa_number, opening_hours, store_phone, contact_email, instagram_url, tiktok_url } = await getStoreSettings()
   const hours = parseOpeningHours(opening_hours)
   return (
     <>
@@ -51,6 +51,18 @@ export default async function ContactPage() {
                 </a>
               </p>
             )}
+            {contact_email && (
+              <p className="mt-3 text-muted-foreground">
+                Email:{' '}
+                <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all text-foreground underline-offset-4 hover:underline">{contact_email}</a>
+              </p>
+            )}
+            {(instagram_url || tiktok_url) && (
+              <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
+                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">Instagram</a>}
+                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">TikTok</a>}
+              </p>
+            )}
             <a
               href={BUSINESS.mapsUrl}
               target="_blank"
@@ -80,7 +92,7 @@ export default async function ContactPage() {
           <div>
             <h2 className="font-heading text-lg font-semibold">Area layanan</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
-              Paling sering Jawa Timur, pernah sampai Bali. Gratis ongkir dalam radius {BUSINESS.freeRadiusKm} km dari gudang.
+              Melayani Jawa, Bali, dan Lombok. Gratis ongkir dalam radius {BUSINESS.freeRadiusKm} km dari gudang.
             </p>
           </div>
         </div>

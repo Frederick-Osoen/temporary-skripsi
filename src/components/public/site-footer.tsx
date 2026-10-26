@@ -28,7 +28,7 @@ const COLS = [
 ]
 
 export async function SiteFooter() {
-  const { wa_number, opening_hours, store_phone } = await getStoreSettings()
+  const { wa_number, opening_hours, store_phone, contact_email, instagram_url, tiktok_url } = await getStoreSettings()
   const hours = parseOpeningHours(opening_hours)
 
   return (
@@ -67,7 +67,7 @@ export async function SiteFooter() {
           <div className="space-y-4">
             <Wordmark tone="night" />
             <p className="max-w-xs text-sm leading-relaxed text-white/65">{BUSINESS.legalTagline}</p>
-            <p className="text-sm text-white/65">Melayani acara dan industri sejak {BUSINESS.founded}.</p>
+            <p className="text-sm text-white/65">Melayani acara dan industri di Jawa, Bali, dan Lombok.</p>
           </div>
 
           {COLS.map((c) => (
@@ -99,6 +99,17 @@ export async function SiteFooter() {
             {store_phone && (
               <p className="text-white/65">
                 Telp. <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
+              </p>
+            )}
+            {contact_email && (
+              <p className="text-white/65">
+                Email <a href={`mailto:${contact_email}`} className="focus-ink rounded break-all underline-offset-4 hover:underline">{contact_email}</a>
+              </p>
+            )}
+            {(instagram_url || tiktok_url) && (
+              <p className="flex flex-wrap gap-x-4 gap-y-1 text-white/65">
+                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">Instagram</a>}
+                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">TikTok</a>}
               </p>
             )}
             {hours.length > 0 ? (

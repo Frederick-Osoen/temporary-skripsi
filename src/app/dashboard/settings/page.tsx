@@ -17,14 +17,14 @@ export default async function SettingsPage() {
   const missing = !!error || !data
   const initial = rowToSettings(data)
   // Kolom dari fase-9d.sql belum ada: kartu baru dikunci dan owner diberi tahu
-  const needs9d = !missing && !('opening_hours' in (data as object))
+  const needs9d = !missing && !('instagram_url' in (data as object))
   const source = await opsSource()
 
   return (
     <div className="max-w-2xl space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground">Kontak dan jam buka toko, tarif BBM, dan penerima email.</p>
+        <p className="text-sm text-muted-foreground">Kontak, sosmed, jam buka toko, tarif BBM, dan penerima email.</p>
       </div>
       {missing && (
         <p role="alert" className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -33,7 +33,7 @@ export default async function SettingsPage() {
       )}
       {needs9d && (
         <p role="alert" className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Telepon, jam buka, dan penerima email butuh kolom baru. Jalankan <code>fase-9d.sql</code> di Supabase, lalu muat ulang halaman ini.
+          Telepon, jam buka, penerima email, email kontak, dan sosmed butuh kolom baru. Jalankan <code>fase-9d.sql</code> lalu <code>fase-9e.sql</code> di Supabase, lalu muat ulang halaman ini.
         </p>
       )}
       <SettingsForm initial={initial} canEdit={!missing && admin.role === 'owner'} extendedReady={!needs9d} emailSource={source} />

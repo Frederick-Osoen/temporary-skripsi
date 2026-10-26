@@ -144,6 +144,113 @@ export const ARTICLES: Article[] = [
       </>
     ),
   },
+  {
+    slug: 'berapa-ac-standing-untuk-acara-100-orang',
+    title: 'Berapa AC standing untuk acara 100 orang?',
+    description: 'Patokan jumlah AC standing 5 PK dari jumlah tamu dan luas area, plus kapan kebutuhan harus dihitung manual bersama admin.',
+    date: '2026-10-27',
+    minutes: 3,
+    body: (
+      <>
+        <p>
+          Dari pengalaman kami menyewakan AC standing 5 PK, satu unit paling optimal untuk ruangan sekitar{' '}
+          <strong>4×5 meter (20 m²)</strong> dengan <strong>15–20 orang</strong>. Satu unit memang masih bisa menjangkau area
+          sampai sekitar 10×10 meter, tetapi dinginnya tidak lagi merata.
+        </p>
+        <h2>Hitungan cepat</h2>
+        <ul>
+          <li>Dari luas: luas area ÷ 20 m².</li>
+          <li>Dari tamu: jumlah tamu ÷ 15–20 orang.</li>
+          <li>Pakai angka yang lebih besar dari keduanya.</li>
+        </ul>
+        <p>
+          Contoh acara 100 tamu di area 120 m²: dari luas butuh sekitar 6 unit, dari tamu sekitar 5–7 unit. Jadi rencanakan
+          sekitar <strong>6 unit</strong>.
+        </p>
+        <h2>Tenda dan area terbuka butuh lebih banyak</h2>
+        <p>
+          Tenda dan area semi-terbuka lebih panas daripada ruangan tertutup, jadi jumlah unitnya biasanya perlu ditambah.{' '}
+          <Link href="/kalkulator">Kalkulator kebutuhan</Link> kami sudah memperhitungkannya, tetapi angka finalnya tetap
+          dipastikan admin.
+        </p>
+        <h2>Di atas 20 unit</h2>
+        <p>
+          Kebutuhan sebesar itu biasanya memakai genset 250 kVA dan perlu dihitung manual, mulai dari pembagian beban sampai
+          jalur kabel. Langsung <Link href="/kontak">chat admin</Link> dengan menyebut lokasi, luas area, dan jumlah tamu.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'cara-menghitung-overtime-sewa-genset',
+    title: 'Cara menghitung overtime sewa genset',
+    description: 'Sewa genset dihitung per hari dengan jatah pemakaian standar. Ini cara menghitung kelebihan jamnya, lengkap dengan contoh.',
+    date: '2026-10-27',
+    minutes: 2,
+    body: (
+      <>
+        <p>
+          Harga sewa genset sudah mencakup pemakaian standar <strong>{STANDARD_HOURS} jam per hari</strong>. Bila genset
+          menyala lebih lama, kelebihannya dihitung sebagai overtime per jam, dibulatkan ke atas, dengan tarif sesuai
+          kapasitas genset.
+        </p>
+        <h2>Contoh</h2>
+        <p>
+          Genset 30 kVA dengan tarif overtime Rp100.000 per jam dipakai 15 jam dalam satu hari:
+        </p>
+        <ul>
+          <li>{STANDARD_HOURS} jam pertama: sudah termasuk harga sewa harian.</li>
+          <li>Kelebihan {15 - STANDARD_HOURS} jam × Rp100.000 = <strong>Rp{((15 - STANDARD_HOURS) * 100000).toLocaleString('id-ID')}</strong>.</li>
+        </ul>
+        <p>Bila sewa beberapa hari, jam lebih dihitung per hari.</p>
+        <h2>Tarif tiap kapasitas berbeda</h2>
+        <p>
+          Semakin besar kapasitas genset, semakin besar tarif overtime per jamnya. Halaman{' '}
+          <Link href="/estimasi">estimasi biaya</Link> menghitung overtime otomatis begitu Anda mengisi jam pemakaian, dan
+          harga finalnya tetap dikonfirmasi admin.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'alur-sewa-ac-dan-genset-di-jj-teknik',
+    title: 'Alur sewa AC dan genset di JJ Teknik',
+    description: 'Dari hitung estimasi, chat admin, DP, pemasangan, sampai pembongkaran. Begini langkah menyewa AC standing dan genset.',
+    date: '2026-10-27',
+    minutes: 3,
+    body: (
+      <>
+        <ol>
+          <li>
+            <strong>Hitung estimasi.</strong> Buka <Link href="/estimasi">estimasi biaya</Link>, pilih unit, tanggal, dan
+            lokasi. Angkanya gambaran biaya, bukan harga final.
+          </li>
+          <li>
+            <strong>Kirim ke admin lewat WhatsApp.</strong> Admin mengecek ketersediaan unit pada tanggal Anda dan
+            menyepakati harga final.
+          </li>
+          <li>
+            <strong>Bayar DP.</strong> Nominal DP fleksibel dan dibicarakan dengan admin. DP yang sudah dibayar pada dasarnya
+            tidak dikembalikan; pada kasus tertentu admin dapat mempertimbangkannya.
+          </li>
+          <li>
+            <strong>Pemasangan.</strong> Unit diantar dengan armada kami sendiri dan dipasang sehari sebelum acara.
+          </li>
+          <li>
+            <strong>Acara berlangsung.</strong> Bila AC tidak mendinginkan sesuai yang dijanjikan, berlaku garansi dingin
+            kami.
+          </li>
+          <li>
+            <strong>Pembongkaran.</strong> Setelah acara selesai, tim kami mengambil kembali unitnya.
+          </li>
+        </ol>
+        <p>
+          Ongkir gratis dalam radius 25 km dari gudang di Pandaan. Kami melayani Jawa, Bali, dan Lombok; untuk lokasi lain
+          ongkir ditentukan admin.
+        </p>
+      </>
+    ),
+  },
 ]
 
 export const getArticle = (slug: string) => ARTICLES.find((a) => a.slug === slug) ?? null

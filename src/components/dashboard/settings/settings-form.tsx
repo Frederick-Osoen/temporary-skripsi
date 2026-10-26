@@ -37,6 +37,9 @@ export function SettingsForm({
   const [pickup, setPickup] = useState(String(initial.fuel_rate_pickup))
   const [truck, setTruck] = useState(String(initial.fuel_rate_truck))
   const [emails, setEmails] = useState(initial.notify_emails)
+  const [cEmail, setCEmail] = useState(initial.contact_email)
+  const [ig, setIg] = useState(initial.instagram_url)
+  const [tt, setTt] = useState(initial.tiktok_url)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, start] = useTransition()
 
@@ -51,6 +54,7 @@ export function SettingsForm({
         saveSettings({
           wa_number: wa, fuel_rate_pickup: pickup, fuel_rate_truck: truck,
           store_phone: phone, opening_hours: hours, notify_emails: emails,
+          contact_email: cEmail, instagram_url: ig, tiktok_url: tt,
         })
       )
       setMsg(res.ok ? { ok: true, text: 'Pengaturan tersimpan.' } : { ok: false, text: res.error })
@@ -81,9 +85,26 @@ export function SettingsForm({
             value={hours}
             onChange={(e) => setHours(e.target.value)}
             disabled={offExt}
-            placeholder={'Senin–Sabtu: 08.00–17.00\nMinggu: tutup'}
+            placeholder={'Senin–Sabtu: 08.00–16.00\nMinggu: libur'}
           />
           <p className="text-xs text-muted-foreground">Satu hari atau rentang per baris, dengan tanda titik dua. Bila kosong, situs menampilkan &quot;tanyakan lewat WhatsApp&quot;.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="cemail" className="text-sm font-medium">Email kontak publik <span className="font-normal text-muted-foreground">(opsional)</span></label>
+          <input id="cemail" type="email" className={input} value={cEmail} onChange={(e) => setCEmail(e.target.value)} disabled={offExt} placeholder="halo@jjteknik.com" />
+          <p className="text-xs text-muted-foreground">Tampil di footer dan halaman Kontak. Terpisah dari penerima email operasional di bawah. Kosong = tidak ditampilkan.</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <label htmlFor="ig" className="text-sm font-medium">Instagram <span className="font-normal text-muted-foreground">(opsional)</span></label>
+            <input id="ig" className={input} value={ig} onChange={(e) => setIg(e.target.value)} disabled={offExt} inputMode="url" placeholder="https://instagram.com/akun" />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="tt" className="text-sm font-medium">TikTok <span className="font-normal text-muted-foreground">(opsional)</span></label>
+            <input id="tt" className={input} value={tt} onChange={(e) => setTt(e.target.value)} disabled={offExt} inputMode="url" placeholder="https://tiktok.com/@akun" />
+          </div>
         </div>
       </Card>
 

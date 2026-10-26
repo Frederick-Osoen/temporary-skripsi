@@ -13,14 +13,14 @@ export const revalidate = 60
 export const metadata: Metadata = {
   title: 'Tentang Kami',
   description:
-    'JJ Teknik berdiri sejak 2020 di Pandaan, Pasuruan. Sewa AC standing, misty fan, dan genset dengan armada sendiri, serta pengadaan dan servis AC.',
+    'JJ Teknik pertama buka tahun 2000 di Pandaan, Pasuruan, dan beroperasi kembali sejak 2022. Sewa AC standing, misty fan, dan genset dengan armada sendiri, serta pengadaan dan servis AC.',
 }
 
 const FACTS = [
-  { value: String(BUSINESS.founded), label: 'Tahun berdiri, di Pandaan' },
-  { value: '2', label: 'Jenis armada sendiri: pickup dan truk engkel' },
+  { value: String(BUSINESS.founded), label: 'Pertama buka, di Pandaan' },
+  { value: String(BUSINESS.resumed), label: 'Beroperasi kembali setelah sempat berhenti' },
   { value: `${BUSINESS.freeRadiusKm} km`, label: 'Radius gratis ongkir dari gudang' },
-  { value: 'Bali', label: 'Lokasi terjauh yang pernah kami layani' },
+  { value: '3 pulau', label: 'Jawa, Bali, dan Lombok kami layani' },
 ]
 
 const REASONS = [
@@ -36,10 +36,10 @@ function ReachRings() {
   const rings = [
     { r: 54, label: `${BUSINESS.freeRadiusKm} km gratis ongkir`, tone: 'var(--frost)', dash: undefined, spin: '' },
     { r: 104, label: 'Jawa Timur', tone: 'rgb(255 255 255 / 0.55)', dash: '2 7', spin: 'reach-spin-rev' },
-    { r: 150, label: 'Sampai Bali', tone: 'var(--volt)', dash: '4 6', spin: 'reach-spin' },
+    { r: 150, label: 'Jawa, Bali, Lombok', tone: 'var(--volt)', dash: '4 6', spin: 'reach-spin' },
   ]
   return (
-    <svg viewBox="0 -20 320 345" className="reach mx-auto w-full max-w-sm overflow-visible" role="img" aria-label="Jangkauan layanan: gratis ongkir 25 km dari Pandaan, paling sering Jawa Timur, pernah sampai Bali.">
+    <svg viewBox="0 -20 320 345" className="reach mx-auto w-full max-w-sm overflow-visible" role="img" aria-label="Jangkauan layanan: gratis ongkir 25 km dari Pandaan, melayani Jawa, Bali, dan Lombok.">
       <defs>
         <radialGradient id="reach-glow">
           <stop offset="0" stopColor="var(--frost)" stopOpacity="0.22" />
@@ -86,13 +86,13 @@ export default async function AboutPage() {
           <div className="lg:col-span-7">
             <h1 className="font-heading text-4xl leading-[1.02] font-semibold sm:text-6xl">Dari Pandaan, sejak {BUSINESS.founded}.</h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/75">
-              JJ Teknik didirikan oleh {BUSINESS.owner} di Pandaan, Pasuruan. Toko kami menjual AC dan sparepart pendingin,
+              JJ Teknik pertama buka di Pandaan, Pasuruan pada {BUSINESS.founded}, sempat berhenti, lalu beroperasi kembali sejak {BUSINESS.resumed}. Toko kami menjual AC dan sparepart pendingin,
               menyewakan AC standing, misty fan, dan genset untuk acara dan industri, serta menangani pengadaan, maintenance,
               dan servis AC.
             </p>
             <p className="mt-4 max-w-xl leading-relaxed text-white/65">
-              Pelanggan kami datang dari pernikahan, ulang tahun, acara perusahaan, sampai area produksi pabrik. Sebagian besar
-              di Jawa Timur, dan pernah sampai ke Bali.
+              Pelanggan kami datang dari pernikahan, ulang tahun, acara perusahaan, sampai area produksi pabrik. Kami melayani
+              Jawa, Bali, dan Lombok.
             </p>
           </div>
           <div className="lg:col-span-5">
