@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { MapPin, MessageCircle, Navigation } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Navigation, Phone } from 'lucide-react'
 import { JsonLd, localBusinessLd } from '@/components/public/json-ld'
 import { MapEmbed } from '@/components/public/map-embed'
 import { PageHero } from '@/components/public/page-hero'
@@ -44,20 +44,6 @@ export default async function ContactPage() {
               <MapPin className="mt-1 size-4 shrink-0 text-primary" aria-hidden="true" />
               {fullAddress}
             </p>
-            {store_phone && (
-              <p className="mt-3 text-muted-foreground">
-                Telepon:{' '}
-                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">
-                  {store_phone}
-                </a>
-              </p>
-            )}
-            {contact_email && (
-              <p className="mt-3 text-muted-foreground">
-                Email:{' '}
-                <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all text-foreground underline-offset-4 hover:underline">{contact_email}</a>
-              </p>
-            )}
             <a
               href={BUSINESS.mapsUrl}
               target="_blank"
@@ -83,6 +69,26 @@ export default async function ContactPage() {
               <p className="mt-3 text-muted-foreground">Tanyakan lewat WhatsApp sebelum datang, supaya admin bisa menyiapkan barangnya.</p>
             )}
           </div>
+
+          {(store_phone || contact_email) && (
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Hubungi kami</h2>
+              <ul className="mt-3 space-y-2.5">
+                {store_phone && (
+                  <li className="flex items-center gap-3">
+                    <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium underline-offset-4 hover:underline">{store_phone}</a>
+                  </li>
+                )}
+                {contact_email && (
+                  <li className="flex items-center gap-3">
+                    <Mail className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all underline-offset-4 hover:underline">{contact_email}</a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
 
           <div>
             <h2 className="font-heading text-lg font-semibold">Area layanan</h2>
