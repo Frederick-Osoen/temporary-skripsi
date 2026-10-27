@@ -24,7 +24,7 @@ Kalau kalimatnya tidak ketemu di kode, berarti ia datang dari database (lihat ba
 | Harga sewa/jual, kapasitas kVA, **tarif overtime genset**, stok, foto produk | **Produk** |
 | Foto galeri | **Galeri** |
 | Testimoni | **Testimoni** |
-| Admin lain | **Admin** |
+| Admin lain | **Kelola Admin** |
 
 Aturan genset (berapa AC butuh berapa kVA) ada di tabel `genset_rules`; ubah langsung di Supabase → Table Editor.
 
