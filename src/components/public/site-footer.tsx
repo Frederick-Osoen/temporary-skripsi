@@ -69,6 +69,23 @@ export async function SiteFooter() {
             <Wordmark tone="night" />
             <p className="max-w-xs text-sm leading-relaxed text-white/65">{BUSINESS.legalTagline}</p>
             <p className="text-sm text-white/65">Melayani acara dan industri di Jawa, Bali, dan Lombok.</p>
+            {(instagram_url || tiktok_url) && (
+              <div className="pt-2">
+                <p className="text-sm font-semibold text-white">Temukan kami juga di</p>
+                <p className="mt-3 flex gap-2">
+                  {instagram_url && (
+                    <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
+                      <InstagramIcon />
+                    </a>
+                  )}
+                  {tiktok_url && (
+                    <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
+                      <TikTokIcon />
+                    </a>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
 
           {COLS.map((c) => (
@@ -105,20 +122,6 @@ export async function SiteFooter() {
             {contact_email && (
               <p className="text-white/65">
                 Email <a href={`mailto:${contact_email}`} className="focus-ink rounded break-all underline-offset-4 hover:underline">{contact_email}</a>
-              </p>
-            )}
-            {(instagram_url || tiktok_url) && (
-              <p className="flex gap-2">
-                {instagram_url && (
-                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
-                    <InstagramIcon />
-                  </a>
-                )}
-                {tiktok_url && (
-                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
-                    <TikTokIcon />
-                  </a>
-                )}
               </p>
             )}
             {hours.length > 0 ? (

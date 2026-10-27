@@ -58,20 +58,6 @@ export default async function ContactPage() {
                 <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all text-foreground underline-offset-4 hover:underline">{contact_email}</a>
               </p>
             )}
-            {(instagram_url || tiktok_url) && (
-              <p className="mt-3 flex gap-2">
-                {instagram_url && (
-                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink flex size-11 items-center justify-center rounded-full border border-input bg-card text-foreground transition-colors hover:bg-muted">
-                    <InstagramIcon />
-                  </a>
-                )}
-                {tiktok_url && (
-                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink flex size-11 items-center justify-center rounded-full border border-input bg-card text-foreground transition-colors hover:bg-muted">
-                    <TikTokIcon />
-                  </a>
-                )}
-              </p>
-            )}
             <a
               href={BUSINESS.mapsUrl}
               target="_blank"
@@ -104,6 +90,24 @@ export default async function ContactPage() {
               Melayani Jawa, Bali, dan Lombok. Gratis ongkir dalam radius {BUSINESS.freeRadiusKm} km dari gudang.
             </p>
           </div>
+
+          {(instagram_url || tiktok_url) && (
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Temukan kami juga di</h2>
+              <p className="mt-3 flex flex-wrap gap-2">
+                {instagram_url && (
+                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink inline-flex h-11 items-center gap-2 rounded-full border border-input bg-card px-5 text-sm font-medium transition-colors hover:bg-muted">
+                    <InstagramIcon className="size-4" /> Instagram
+                  </a>
+                )}
+                {tiktok_url && (
+                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink inline-flex h-11 items-center gap-2 rounded-full border border-input bg-card px-5 text-sm font-medium transition-colors hover:bg-muted">
+                    <TikTokIcon className="size-4" /> TikTok
+                  </a>
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6 lg:col-span-7">
