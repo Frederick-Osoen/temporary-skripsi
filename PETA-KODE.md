@@ -34,6 +34,9 @@ Aturan genset (berapa AC butuh berapa kVA) ada di tabel `genset_rules`; ubah lan
 |---|---|
 | Tahun buka/buka kembali, alamat, radius gratis ongkir, armada, tagline, link Maps | `src/lib/public/business.ts` |
 | Redaksi garansi | `src/lib/public/business.ts` (blok `GUARANTEE`) |
+| Logo JJ (bentuk di navbar dan footer) | `src/components/public/brand-mark.tsx` |
+| Favicon tab browser | `src/app/icon.svg` dan `src/app/favicon.ico` |
+| Ikon aplikasi (PWA / layar HP) | `public/icons/*.png` |
 | Daftar FAQ | `src/lib/public/faq.ts` |
 | Artikel | `src/content/articles.tsx` (satu blok `{ slug, title, ... }` per artikel) |
 | Foto dan nama tim | `src/lib/public/team.ts` (petunjuknya ada di komentar file itu) |
@@ -41,6 +44,7 @@ Aturan genset (berapa AC butuh berapa kVA) ada di tabel `genset_rules`; ubah lan
 | Judul besar dan teks **Beranda** | `src/app/(public)/page.tsx` |
 | Teks halaman **Kontak** | `src/app/(public)/kontak/page.tsx` |
 | Teks penutup dan kolom link **footer** | `src/components/public/site-footer.tsx` |
+| Ikon Instagram dan TikTok (bentuk SVG-nya) | `src/components/public/social-icons.tsx` |
 | Menu navbar | `src/components/public/site-header.tsx` (daftar `NAV`) |
 | Rumus kalkulator kebutuhan AC | `src/lib/public/needs.ts` |
 | Batas muat pickup/truk | `src/lib/public/fleet.ts` |
@@ -53,11 +57,6 @@ Tanda `{BUSINESS.founded}` hanyalah angka yang ditempel dari `business.ts`; bole
 ## C. Rahasia (`.env.local`)
 
 Kunci Supabase, Resend, Google Calendar, `CRON_SECRET`, URL situs. Jangan pernah di-commit.
-
-## Satu perkara yang masih bercampur
-
-Baris "di Jawa Timur" di judul Beranda belum diganti ke "Jawa, Bali, dan Lombok" (ada di
-`src/app/(public)/page.tsx`, cari `untuk acara dan industri di`).
 
 ## Alur pesanan (yang memang berlapis)
 

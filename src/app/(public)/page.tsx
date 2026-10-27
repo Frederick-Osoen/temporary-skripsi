@@ -91,7 +91,7 @@ export default async function HomePage() {
                 Sejuk sebelum tamu datang.
               </span>
               <span className="mt-5 block max-w-md font-sans text-lg leading-snug font-normal tracking-normal text-white/75 sm:text-xl">
-                Sewa AC standing, misty fan &amp; genset untuk acara dan industri di Jawa Timur.
+                Sewa AC standing, misty fan &amp; genset untuk acara dan industri di Jawa, Bali &amp; Lombok.
               </span>
             </h1>
 

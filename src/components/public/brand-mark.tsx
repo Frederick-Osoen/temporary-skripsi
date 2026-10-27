@@ -1,9 +1,10 @@
 import { cn } from '@/lib/utils'
 
 /**
- * PROPOSAL wordmark baru (bukan identitas final). Monogram "JJ" dengan
+ * Logo JJ Teknik (disukai client, 2026-10-27). Monogram "JJ" dengan
  * satu titik amber (daya) dan garis cyan (udara dingin).
  * Logo lama ada di public/brand/logo-lama.png dan sengaja tidak dipakai di header.
+ * Bentuk yang sama juga ada di src/app/icon.svg (favicon) dan public/icons/*.png; bila logo diubah, ubah juga ketiganya.
  */
 export function BrandMark({ className, tone = 'night' }: { className?: string; tone?: 'night' | 'day' }) {
   return (

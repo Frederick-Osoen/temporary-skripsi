@@ -4,6 +4,7 @@ import { MapPin, MessageCircle, Navigation } from 'lucide-react'
 import { JsonLd, localBusinessLd } from '@/components/public/json-ld'
 import { MapEmbed } from '@/components/public/map-embed'
 import { PageHero } from '@/components/public/page-hero'
+import { InstagramIcon, TikTokIcon } from '@/components/public/social-icons'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
 import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 
@@ -58,9 +59,17 @@ export default async function ContactPage() {
               </p>
             )}
             {(instagram_url || tiktok_url) && (
-              <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
-                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">Instagram</a>}
-                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">TikTok</a>}
+              <p className="mt-3 flex gap-2">
+                {instagram_url && (
+                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink flex size-11 items-center justify-center rounded-full border border-input bg-card text-foreground transition-colors hover:bg-muted">
+                    <InstagramIcon />
+                  </a>
+                )}
+                {tiktok_url && (
+                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink flex size-11 items-center justify-center rounded-full border border-input bg-card text-foreground transition-colors hover:bg-muted">
+                    <TikTokIcon />
+                  </a>
+                )}
               </p>
             )}
             <a

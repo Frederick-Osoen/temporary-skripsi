@@ -3,6 +3,7 @@ import { MapPin, MessageCircle } from 'lucide-react'
 import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
 import { Wordmark } from './brand-mark'
+import { InstagramIcon, TikTokIcon } from './social-icons'
 
 const COLS = [
   {
@@ -107,9 +108,17 @@ export async function SiteFooter() {
               </p>
             )}
             {(instagram_url || tiktok_url) && (
-              <p className="flex flex-wrap gap-x-4 gap-y-1 text-white/65">
-                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">Instagram</a>}
-                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">TikTok</a>}
+              <p className="flex gap-2">
+                {instagram_url && (
+                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
+                    <InstagramIcon />
+                  </a>
+                )}
+                {tiktok_url && (
+                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink flex size-10 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:border-white/45 hover:text-white">
+                    <TikTokIcon />
+                  </a>
+                )}
               </p>
             )}
             {hours.length > 0 ? (
