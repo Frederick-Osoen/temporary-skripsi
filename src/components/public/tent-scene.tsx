@@ -94,21 +94,35 @@ export function TentScene({ className }: { className?: string }) {
     }
     resize()
 
-    const count = wrap.getBoundingClientRect().width < 520 ? 220 : 420
+    const count = wrap.getBoundingClientRect().width < 520 ? 160 : 380
     const ps = spawn(count, reduced ? 0.08 : 1)
 
+    // Goresan dikelompokkan per warna + ketebalan: ±40 panggilan stroke per frame, bukan satu per partikel.
+    const WIDTHS = [1.3, 1.8, 2.4]
+    const buckets: number[][] = Array.from({ length: 32 * WIDTHS.length }, () => [])
     const draw = () => {
       ctx.clearRect(0, 0, VW, VH)
       ctx.lineCap = 'round'
+      for (const b of buckets) b.length = 0
       for (const p of ps) {
         const speed = Math.hypot(p.vx, p.vy)
-        ctx.strokeStyle = LUT[Math.max(0, Math.min(31, Math.round(p.t * 31)))]
-        ctx.lineWidth = p.r
-        ctx.beginPath()
-        ctx.moveTo(p.x, p.y)
+        const ci = Math.max(0, Math.min(31, Math.round(p.t * 31)))
+        const wi = p.r < 1.7 ? 0 : p.r < 2.2 ? 1 : 2
         // Udara dingin yang mengalir tampil sebagai goresan; udara panas yang diam tampil sebagai titik
         const len = Math.min(9, 0.6 + speed * 3.2)
-        ctx.lineTo(p.x - (p.vx / (speed || 1)) * len, p.y - (p.vy / (speed || 1)) * len)
+        const k = speed || 1
+        buckets[ci * WIDTHS.length + wi].push(p.x, p.y, p.x - (p.vx / k) * len, p.y - (p.vy / k) * len)
+      }
+      for (let i = 0; i < buckets.length; i++) {
+        const b = buckets[i]
+        if (b.length === 0) continue
+        ctx.strokeStyle = LUT[Math.floor(i / WIDTHS.length)]
+        ctx.lineWidth = WIDTHS[i % WIDTHS.length]
+        ctx.beginPath()
+        for (let j = 0; j < b.length; j += 4) {
+          ctx.moveTo(b[j], b[j + 1])
+          ctx.lineTo(b[j + 2], b[j + 3])
+        }
         ctx.stroke()
       }
     }
@@ -264,14 +278,23 @@ export function TentScene({ className }: { className?: string }) {
 
     draw()
     const hasIdle = typeof window.requestIdleCallback === 'function'
-    const idle = hasIdle ? window.requestIdleCallback(() => play(), { timeout: 600 }) : 0
-    const fallback = hasIdle ? 0 : setTimeout(play, 200)
+    // Mulai setelah halaman selesai dimuat dan browser idle, supaya tidak berebut dengan hidrasi dan LCP.
+    let idle = 0
+    let fallback: ReturnType<typeof setTimeout> | undefined
+    const kickoff = () => {
+      if (hasIdle) idle = window.requestIdleCallback(() => play(), { timeout: 1200 })
+      else fallback = setTimeout(play, 400)
+    }
+    const onLoad = () => kickoff()
+    if (document.readyState === 'complete') kickoff()
+    else window.addEventListener('load', onLoad, { once: true })
 
     return () => {
       pause()
       timers.forEach(clearTimeout)
       if (hasIdle) window.cancelIdleCallback(idle)
       clearTimeout(fallback)
+      window.removeEventListener('load', onLoad)
       io.disconnect()
       ro.disconnect()
       document.removeEventListener('visibilitychange', onVis)

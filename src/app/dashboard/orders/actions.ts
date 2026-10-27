@@ -1,10 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { requireAdmin, requireAdminProfile } from '@/lib/auth'
 import { isNetworkError } from '@/lib/db-errors'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { syncOrderCalendar } from '@/lib/calendar/sync'
+import { notifyAudit, type AuditKind } from '@/lib/notify/events'
+import { leadScheduleDays, type LeadPayload } from '@/lib/leads'
 import type { ActionCode, ActionData, ActionFail } from '@/lib/action-client'
 import { normalizePhone } from '@/lib/phone'
 import { calcItemsTotal, rentalDays, resolveShipping, type ResolvedShipping } from '@/lib/orders/utils'
@@ -19,6 +24,18 @@ import {
   type CustomerLookup,
   type OrderFormValues,
 } from '@/lib/validations/order'
+
+// Pekerjaan pelengkap (kalender, email) dijalankan SETELAH respons dikirim dan tidak pernah menggagalkan aksi utama.
+const later = (fn: () => Promise<unknown>) =>
+  after(() => fn().catch((err) => console.error('[orders] tugas lanjutan gagal:', err)))
+
+const audit = (kind: AuditKind, orderId: string, actor: string, reason?: string | null) =>
+  later(() => notifyAudit({ kind, orderId, actor, reason }))
+
+async function orderIdOfPayment(paymentId: string): Promise<string | null> {
+  const { data } = await createAdminClient().from('payment_transactions').select('order_id').eq('id', paymentId).maybeSingle()
+  return (data?.order_id as string | undefined) ?? null
+}
 
 const fail = (error: string, code?: ActionCode): ActionFail => ({ ok: false, error, code })
 
@@ -186,7 +203,7 @@ export async function createOrder(
   input: unknown,
   requestId: string,
   leadId?: string // opsional: pesanan ini berasal dari lead di halaman Leads
-): Promise<ActionData<{ id: string; code: string; duplicate: boolean }>> {
+): Promise<ActionData<{ id: string; code: string; duplicate: boolean; scheduleApplied: boolean; needsAllocation: boolean }>> {
   return guard(async () => {
     if (!z.string().uuid().safeParse(requestId).success) return fail('Permintaan tidak valid')
     if (leadId !== undefined && !z.string().uuid().safeParse(leadId).success) return fail('Lead tidak valid')
@@ -229,8 +246,44 @@ export async function createOrder(
       revalidatePath('/dashboard/leads')
     }
 
+    let scheduleApplied = false
+    let needsAllocation = false
+    if (!result.duplicate) {
+      // Jenis acara disimpan terpisah (kolom bukan bagian dari fungsi create_order). Best-effort.
+      if (v.event_type) {
+        const { error: evErr } = await createAdminClient().from('orders').update({ event_type: v.event_type }).eq('id', result.order_id) // service role: orders hanya diubah lewat RPC untuk role biasa
+        if (evErr) console.error('[orders] gagal menyimpan jenis acara (sudah menjalankan fase-9a.sql?):', evErr.message)
+      }
+
+      // Pesanan dari lead: jam genset yang sudah diisi pelanggan langsung masuk ke Jadwal Operasional
+      if (leadId) {
+        try {
+          const { data: lead } = await ctx.supabase.from('leads').select('payload').eq('id', leadId).maybeSingle()
+          const days = leadScheduleDays((lead?.payload ?? null) as LeadPayload | null, v.start_date, v.end_date)
+          if (days.length > 0) {
+            const { data: ord } = await ctx.supabase.from('orders').select('version').eq('id', result.order_id).maybeSingle()
+            if (ord) {
+              const { error: schErr } = await ctx.supabase.rpc('set_order_schedule', {
+                p_order_id: result.order_id,
+                p_version: ord.version,
+                p_data: { days },
+              })
+              if (schErr) console.error('[orders] jadwal dari lead gagal disimpan:', schErr.message)
+              else scheduleApplied = true
+            }
+          }
+        } catch (err) {
+          console.error('[orders] jadwal dari lead gagal:', err)
+        }
+      }
+
+      const { data: alloc } = await ctx.supabase.from('order_allocation_summary').select('units_needed').eq('order_id', result.order_id).maybeSingle()
+      needsAllocation = Number(alloc?.units_needed ?? 0) > 0
+    }
+
+    if (!result.duplicate) later(() => syncOrderCalendar(result.order_id))
     revalidatePath('/dashboard/orders')
-    return { ok: true, data: { id: result.order_id, code: result.order_code, duplicate: !!result.duplicate } }
+    return { ok: true, data: { id: result.order_id, code: result.order_code, duplicate: !!result.duplicate, scheduleApplied, needsAllocation } }
   })
 }
 
@@ -270,6 +323,12 @@ export async function updateOrder(
     const result = data as { version: number } | null
     if (!result) return fail('Gagal memperbarui pesanan')
 
+    if (v.event_type !== undefined) {
+      const { error: evErr } = await createAdminClient().from('orders').update({ event_type: v.event_type ?? null }).eq('id', id)
+      if (evErr) console.error('[orders] gagal menyimpan jenis acara:', evErr.message)
+    }
+    later(() => syncOrderCalendar(id))
+    if (reason) audit('override', id, ctx.name, reason)
     revalidatePath('/dashboard/orders')
     revalidatePath(`/dashboard/orders/${id}`)
     return { ok: true, data: { id, version: result.version } }
@@ -293,7 +352,7 @@ export async function changeOrderStatus(input: unknown): Promise<ActionData<{ st
     // DP Diterima hanya lewat pencatatan pembayaran
     if (to === 'dp_received') return fail('Catat pembayaran DP untuk memajukan status ini.')
 
-    const ctx = await requireAdmin()
+    const ctx = await requireAdminProfile()
     if (!ctx.ok) return fail(ctx.error, ctx.code)
 
     const { data, error } = await ctx.supabase.rpc('change_order_status', {
@@ -306,6 +365,9 @@ export async function changeOrderStatus(input: unknown): Promise<ActionData<{ st
 
     const result = data as { status: OrderStatus; version: number } | null
     if (!result) return fail('Gagal mengubah status')
+
+    later(() => syncOrderCalendar(id))
+    if (to === 'cancelled') audit('cancel', id, ctx.name, note)
 
     revalidatePath('/dashboard/orders')
     revalidatePath(`/dashboard/orders/${id}`)
@@ -352,8 +414,9 @@ export async function editPayment(input: unknown): Promise<ActionData<PaymentCha
     if (!parsed.success) return fail(parsed.error.issues[0].message)
     const v = parsed.data
 
-    const ctx = await requireAdmin()
+    const ctx = await requireAdminProfile()
     if (!ctx.ok) return fail(ctx.error, ctx.code)
+    const orderId = await orderIdOfPayment(v.payment_id)
 
     const { data, error } = await ctx.supabase.rpc('edit_payment', {
       p_payment_id: v.payment_id,
@@ -365,6 +428,7 @@ export async function editPayment(input: unknown): Promise<ActionData<PaymentCha
 
     const r = data as PaymentChange | null
     if (!r) return fail('Gagal memperbarui pembayaran')
+    if (orderId) audit('payment_edit', orderId, ctx.name, v.reason)
 
     revalidatePath('/dashboard/orders/[id]', 'page')
     return { ok: true, data: { version: Number(r.version), paid: Number(r.paid), remaining: Number(r.remaining) } }
@@ -377,8 +441,9 @@ export async function deletePayment(input: unknown): Promise<ActionData<PaymentC
     if (!parsed.success) return fail(parsed.error.issues[0].message)
     const v = parsed.data
 
-    const ctx = await requireAdmin()
+    const ctx = await requireAdminProfile()
     if (!ctx.ok) return fail(ctx.error, ctx.code)
+    const orderId = await orderIdOfPayment(v.payment_id) // dicari sebelum baris pembayaran terhapus
 
     const { data, error } = await ctx.supabase.rpc('delete_payment', {
       p_payment_id: v.payment_id,
@@ -389,6 +454,7 @@ export async function deletePayment(input: unknown): Promise<ActionData<PaymentC
 
     const r = data as PaymentChange | null
     if (!r) return fail('Gagal menghapus pembayaran')
+    if (orderId) audit('payment_delete', orderId, ctx.name, v.reason)
 
     revalidatePath('/dashboard/orders/[id]', 'page')
     return { ok: true, data: { version: Number(r.version), paid: Number(r.paid), remaining: Number(r.remaining) } }
@@ -481,6 +547,7 @@ export async function extendOrder(
 
     const r = data as { version: number; end_date: string; total_amount: number; added_amount: number } | null
     if (!r) return fail('Gagal memperpanjang sewa')
+    later(() => syncOrderCalendar(v.order_id))
 
     revalidatePath('/dashboard/orders/[id]', 'page')
     revalidatePath('/dashboard/orders')

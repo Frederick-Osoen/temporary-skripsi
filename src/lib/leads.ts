@@ -1,6 +1,7 @@
 // Tipe dan pengubah data lead (dari halaman estimasi publik) -> nilai awal form pesanan admin.
 // Murni (tanpa akses database) agar mudah diuji.
 import { addDays } from '@/lib/orders/utils'
+import { eachDay } from '@/lib/orders/schedule'
 import { PICKUP_DESTINATION, type OrderFormValues, type OrderProduct } from '@/lib/validations/order'
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'dismissed'
@@ -11,6 +12,8 @@ export type LeadPayload = {
   end_date?: string
   start_time?: string | null
   end_time?: string | null
+  day_hours?: { date: string; start: string; end: string }[] | null
+  event_type?: string | null
   delivery?: string
   destination?: string | null
   fleet?: string | null
@@ -46,6 +49,22 @@ export type LeadPrefill = {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const EVENT_TYPES = ['pernikahan', 'korporat', 'pabrik', 'ulang_tahun', 'lainnya'] as const
+
+/**
+ * Jadwal jam genset dari lead untuk rentang tanggal pesanan: jam per hari bila ada, jika tidak jam seragam.
+ * Hanya tanggal di dalam rentang pesanan yang dipakai. Kosong bila lead tidak membawa jam.
+ */
+export function leadScheduleDays(p: LeadPayload | null, start: string, end: string): { date: string; start: string; end: string }[] {
+  if (!p || !start || !end || end < start) return []
+  if (p.day_hours && p.day_hours.length > 0) {
+    return p.day_hours.filter((d) => d.date >= start && d.date <= end && d.start !== d.end)
+  }
+  if (p.start_time && p.end_time && p.start_time !== p.end_time) {
+    return eachDay(start, end).map((date) => ({ date, start: p.start_time!, end: p.end_time! }))
+  }
+  return []
+}
 
 /** Cocokkan item lead ke produk saat ini: pakai product_id, jika tidak ada (lead lama) pakai nama. */
 export function leadToOrderValues(lead: LeadRow, products: OrderProduct[]): LeadPrefill {
@@ -81,8 +100,14 @@ export function leadToOrderValues(lead: LeadRow, products: OrderProduct[]): Lead
   const storePickup = p.delivery === 'store_pickup' && !hasRental
   const trucks = p.fleet_trucks ?? 0
 
-  if (p.start_time && p.end_time) {
-    info.push(`Jam pemakaian genset dari pelanggan: ${p.start_time} - ${p.end_time}. Atur di bagian Jadwal setelah pesanan disimpan.`)
+  const scheduleDays = leadScheduleDays(p, start, end)
+  if (scheduleDays.length > 0) {
+    const varies = new Set(scheduleDays.map((d) => `${d.start}-${d.end}`)).size > 1
+    info.push(
+      varies
+        ? `Jam genset dari pelanggan berbeda tiap hari (${scheduleDays.length} hari). Akan masuk otomatis ke Jadwal Operasional saat pesanan disimpan.`
+        : `Jam genset dari pelanggan: ${scheduleDays[0].start} - ${scheduleDays[0].end}. Akan masuk otomatis ke Jadwal Operasional saat pesanan disimpan.`
+    )
   }
   for (const n of p.notes ?? []) info.push(n)
   if (!storePickup) info.push('Ongkir belum terhitung: tekan "Hitung Ongkir" pada bagian Pengiriman.')
@@ -102,6 +127,7 @@ export function leadToOrderValues(lead: LeadRow, products: OrderProduct[]): Lead
       start_date: start,
       end_date: end,
       setup_date: setup,
+      event_type: (EVENT_TYPES as readonly string[]).includes(p.event_type ?? '') ? (p.event_type as (typeof EVENT_TYPES)[number]) : null,
       items,
       shipping: { ...DEFAULT_SHIPPING },
     },

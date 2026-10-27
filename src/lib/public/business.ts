@@ -4,7 +4,8 @@
 export const BUSINESS = {
   name: 'JJ Teknik',
   legalTagline: 'Sewa AC standing, misty fan & genset. Pengadaan, maintenance & servis AC.',
-  founded: 2020,
+  founded: 2000, // pertama buka (konfirmasi owner 2026-10-27)
+  resumed: 2022, // sempat berhenti, beroperasi kembali
   owner: 'Audy',
   street: 'Jl. Sedap Malam No.16, Macanan, Petungasri',
   district: 'Kec. Pandaan',
@@ -14,19 +15,18 @@ export const BUSINESS = {
   country: 'ID',
   freeRadiusKm: 25,
   fleet: ['Mobil pickup', 'Truk engkel'],
-  // Pernah dilayani: sampai Bali; mayoritas Jawa Timur.
-  serviceArea: 'Seluruh Indonesia, terutama Jawa Timur',
+  serviceArea: 'Jawa, Bali, dan Lombok',
   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=JJ+Teknik+Sewa+AC+Standing+Misty+Fan+Genset+Pandaan',
   mapsEmbedUrl:
     'https://www.google.com/maps?q=JJ%20Teknik%2C%20Jl.%20Sedap%20Malam%20No.16%2C%20Petungasri%2C%20Pandaan&output=embed',
-  // TODO(owner): isi jam operasional yang benar, misal { days: 'Senin–Sabtu', time: '08.00–17.00' }.
+  // Jam buka dan telepon toko diisi owner di Dashboard > Pengaturan (bukan di kode).
   // Selama kosong, situs menampilkan ajakan chat WhatsApp, bukan jam karangan.
-  hours: [{ days: 'Senin–Sabtu', time: '08.00–16.00' }] as { days: string; time: string }[],
-  // TODO(owner): telepon di spanduk (0343) 633704 / 636710 belum dikonfirmasi, jangan ditampilkan dulu.
-  phones: ['082292247395'] as string[],
+  // TODO(owner): telepon di spanduk (0343) 633704 / 636710 belum dikonfirmasi; isi di Pengaturan setelah yakin.
+  hours: [] as { days: string; time: string }[],
+  phones: [] as string[],
 } as const
 
-// TODO(owner): redaksi dan syarat garansi wajib dikonfirmasi owner sebelum situs tayang.
+// Garansi: redaksi dan syarat disetujui lisan oleh owner (2026-10-27), tanpa persetujuan tertulis.
 export const GUARANTEE = {
   headline: 'AC tidak dingin? Tidak usah bayar.',
   body: 'Kalau unit AC sewaan kami tidak mendinginkan sesuai yang dijanjikan saat acara, Anda tidak perlu membayar sewa unit tersebut.',

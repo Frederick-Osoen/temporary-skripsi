@@ -7,6 +7,8 @@ export type LeadPayload = {
     end_date: string
     start_time: string | null
     end_time: string | null
+    day_hours?: { date: string; start: string; end: string }[] | null // bila jam berbeda tiap hari
+    event_type?: string | null
     delivery: 'delivery' | 'store_pickup'
     destination: string | null
     fleet: string | null

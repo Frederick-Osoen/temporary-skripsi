@@ -12,7 +12,7 @@ export const FAQ = [
   },
   {
     q: 'Sampai mana area layanannya?',
-    a: 'Kami paling sering melayani Jawa Timur, tetapi pernah mengirim dan memasang sampai Bali. Kirim lokasi acara Anda lewat WhatsApp untuk dicek.',
+    a: 'Kami melayani Jawa, Bali, dan Lombok. Kirim lokasi acara Anda lewat WhatsApp untuk dicek ongkir dan jadwalnya.',
   },
   {
     q: 'Kapan unit dipasang?',

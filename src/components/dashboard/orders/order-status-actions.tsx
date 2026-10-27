@@ -77,27 +77,51 @@ export function OrderStatusActions({
     })
   }
 
-  return (
-    <div className="space-y-2">
-      {status === 'pending_dp' ? (
-        <Button className="w-full" onClick={onRecordPayment}>Catat DP</Button>
-      ) : next && !blockedByBalance ? (
-        <Button className="w-full" onClick={() => open(next)}>Lanjut: {STATUS_LABEL[next]}</Button>
-      ) : next ? (
-        <div className="space-y-2">
-          <Button className="w-full" disabled>Lanjut: {STATUS_LABEL[next]}</Button>
-          <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            Belum lunas. Sisa tagihan {formatRupiah(remaining)} harus dilunasi sebelum pesanan diselesaikan.
-          </p>
-          <Button variant="outline" className="w-full" onClick={onRecordPayment}>Catat Pelunasan</Button>
-        </div>
-      ) : null}
+  const NEXT_HINT: Partial<Record<OrderStatus, string>> = {
+    in_setup: 'Tandai saat tim berangkat memasang unit.',
+    event_running: 'Tandai saat acara dimulai. Setelah itu pesanan tidak bisa dibatalkan.',
+    waiting_payment: 'Tandai setelah unit dibongkar. Pesanan menunggu pelunasan.',
+    completed: 'Tandai setelah unit dibongkar dan tagihan lunas.',
+  }
 
-      {canCancel(status) && (
-        <Button variant="outline" className="w-full text-destructive" onClick={() => open('cancelled')}>
-          Batalkan Pesanan
-        </Button>
-      )}
+  let headline: string
+  let hint: string | null = null
+  let tone: 'normal' | 'warn' = 'normal'
+  if (status === 'pending_dp') {
+    headline = 'Menunggu DP dari pelanggan'
+    hint = 'Catat DP setelah uang diterima. Status otomatis menjadi DP Diterima.'
+  } else if (next && blockedByBalance) {
+    headline = `Sisa tagihan ${formatRupiah(remaining)}`
+    hint = 'Pesanan baru bisa diselesaikan setelah lunas.'
+    tone = 'warn'
+  } else if (next) {
+    headline = `Berikutnya: ${STATUS_LABEL[next]}`
+    hint = NEXT_HINT[next] ?? null
+  } else {
+    headline = 'Tidak ada langkah berikutnya'
+  }
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`min-w-0 rounded-lg sm:rounded-none ${tone === 'warn' ? 'bg-amber-50 px-3 py-2 text-amber-900 sm:bg-transparent sm:p-0' : ''}`}>
+        <p className={`text-sm font-semibold ${tone === 'warn' ? 'sm:text-amber-800' : ''}`}>{headline}</p>
+        {hint && <p className={`text-xs ${tone === 'warn' ? '' : 'text-muted-foreground'}`}>{hint}</p>}
+      </div>
+
+      <div className="flex shrink-0 flex-col-reverse gap-2 sm:flex-row sm:items-center">
+        {canCancel(status) && (
+          <Button variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => open('cancelled')}>
+            Batalkan pesanan
+          </Button>
+        )}
+        {status === 'pending_dp' ? (
+          <Button className="min-w-40" onClick={onRecordPayment}>Catat DP</Button>
+        ) : next && blockedByBalance ? (
+          <Button className="min-w-40" onClick={onRecordPayment}>Catat pelunasan</Button>
+        ) : next ? (
+          <Button className="min-w-40" onClick={() => open(next)}>Lanjut ke {STATUS_LABEL[next]}</Button>
+        ) : null}
+      </div>
 
       <AlertDialog open={!!target} onOpenChange={(o) => !o && !pending && setTarget(null)}>
         <AlertDialogContent>

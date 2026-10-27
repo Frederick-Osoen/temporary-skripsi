@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { TimeInput } from '@/components/ui/time-input'
 import { saveSchedule } from '@/app/dashboard/orders/actions'
 import { safeAction } from '@/lib/action-client'
 import { formatDate, formatRupiah } from '@/lib/orders/utils'
@@ -100,8 +100,8 @@ function setRow(date: string, patch: Partial<DayDraft>) {
           return (
             <div key={d} className="grid items-center gap-2 rounded-md border p-2 sm:grid-cols-[9rem_1fr_1fr_1fr]">
               <p className="text-sm font-medium">{formatDate(d)}</p>
-              <Input type="time" aria-label={`Jam mulai ${d}`} disabled={locked} value={r.start} onChange={(e) => setRow(d, { start: e.target.value })} />
-              <Input type="time" aria-label={`Jam selesai ${d}`} disabled={locked} value={r.end} onChange={(e) => setRow(d, { end: e.target.value })} />
+              <TimeInput aria-label={`Jam mulai ${d}`} disabled={locked} value={r.start} onChange={(v) => setRow(d, { start: v })} />
+              <TimeInput aria-label={`Jam selesai ${d}`} disabled={locked} value={r.end} onChange={(v) => setRow(d, { end: v })} />
               <p className="text-xs text-muted-foreground">
                 {hours === null
                   ? r.start && r.end ? 'Jam tidak valid' : 'Belum diisi'

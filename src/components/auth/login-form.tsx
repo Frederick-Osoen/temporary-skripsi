@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ export function LoginForm({ notice, next }: { notice: Notice; next?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
+  const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -45,21 +47,40 @@ export function LoginForm({ notice, next }: { notice: Notice; next?: string }) {
   }
 
   return (
-    <AuthCard title="JJ Teknik" subtitle="Masuk ke dashboard admin">
+    <AuthCard title="Masuk" subtitle="Gunakan akun admin yang didaftarkan owner.">
       {notice && <p role="status" className={`mb-4 rounded-md px-3 py-2 text-sm ${NOTICE_CLASS[notice.tone]}`}>{notice.text}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" inputMode="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs text-muted-foreground hover:underline">Lupa password?</Link>
+            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">Lupa password?</Link>
           </div>
-          <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPw ? 'text' : 'password'}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-11 pr-11"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
+              aria-pressed={showPw}
+              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {showPw ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+            </button>
+          </div>
         </div>
 
         <label className="flex items-center gap-2 text-sm">
@@ -69,7 +90,7 @@ export function LoginForm({ notice, next }: { notice: Notice; next?: string }) {
 
         {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" className="w-full" disabled={pending}>{pending ? 'Memproses...' : 'Masuk'}</Button>
+        <Button type="submit" className="h-11 w-full" disabled={pending}>{pending ? 'Memproses...' : 'Masuk'}</Button>
       </form>
     </AuthCard>
   )

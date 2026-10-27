@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentAdmin } from '@/lib/auth'
+import type { OrderFormValues } from '@/lib/validations/order'
 import { getOrderDetail, toFormValues } from '@/lib/orders/detail'
 import { isTerminal, STATUS_LABEL } from '@/lib/orders/status'
 import { OrderForm } from '@/components/dashboard/orders/order-form'
@@ -55,6 +56,9 @@ export default async function EditOrderPage({
     )
   }
 
+  const { data: ev } = await supabase.from('orders').select('event_type').eq('id', id).maybeSingle()
+  const eventType = (ev?.event_type as OrderFormValues['event_type'] | null | undefined) ?? null
+
   const products: OrderProduct[] = (productsRes.data ?? []).map((p) => ({ ...p, base_price: Number(p.base_price) }))
 
   return (
@@ -71,7 +75,7 @@ export default async function EditOrderPage({
         key={`${order.id}:${order.version}`}
         mode="edit"
         products={products}
-        initialValues={toFormValues(order)}
+        initialValues={{ ...toFormValues(order), event_type: eventType }}
         orderId={order.id}
         version={order.version}
         overrideMode={overrideMode}
