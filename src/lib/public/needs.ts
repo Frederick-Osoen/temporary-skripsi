@@ -17,11 +17,11 @@ export type NeedsResult = { acUnits: number; pk: number; kva: number | null }
 // Dasar hitungan dari client (pertemuan 2026-10-27): 1 unit AC standing 5 PK paling optimal untuk
 // ruangan ±4x5 m (20 m²) dan ±15-20 orang; bisa menjangkau sampai ±10x10 m tetapi tidak optimal.
 // Di atas MANUAL_ABOVE unit (biasanya genset 250 kVA) kebutuhan dihitung manual oleh admin.
-// TODO(owner): faktor tenda, semi-terbuka, dan gudang di bawah ini ASUMSI konservatif (area panas/terbuka
-// butuh lebih banyak unit). Client belum memberi angka; konfirmasi lalu ubah di sini.
+// Tenda dikalibrasi dari koreksi client (2026-10-30): tenda 400 m² di lapangan butuh ±30 unit (13,4 m²/unit).
+// TODO(owner): faktor semi-terbuka dan gudang masih ASUMSI konservatif. Client belum memberi angka; konfirmasi lalu ubah di sini.
 export const MANUAL_ABOVE = 20
 export const PEOPLE_PER_UNIT = 18
-const M2_PER_UNIT: Record<Venue, number> = { ruangan: 20, tenda: 16, semi_terbuka: 14, gudang: 16 }
+const M2_PER_UNIT: Record<Venue, number> = { ruangan: 20, tenda: 13.4, semi_terbuka: 14, gudang: 16 }
 
 export function estimateNeeds({ areaM2, people = 0, venue }: NeedsInput): NeedsResult {
   const area = Math.max(0, areaM2)
