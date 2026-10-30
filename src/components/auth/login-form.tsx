@@ -57,10 +57,7 @@ export function LoginForm({ notice, next }: { notice: Notice; next?: string }) {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">Lupa password?</Link>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Input
               id="password"
@@ -83,10 +80,13 @@ export function LoginForm({ notice, next }: { notice: Notice; next?: string }) {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-input" />
-          Ingat saya selama 30 hari
-        </label>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-input" />
+            Ingat saya selama 30 hari
+          </label>
+          <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">Lupa password?</Link>
+        </div>
 
         {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 

@@ -122,7 +122,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
   }, [])
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen overflow-x-clip bg-muted/40">
       {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex h-16 shrink-0 items-center px-5 text-white">

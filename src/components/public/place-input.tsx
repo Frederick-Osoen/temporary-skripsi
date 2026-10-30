@@ -68,7 +68,11 @@ export function PlaceInput({ id, value, onChange, onPick }: Props) {
         onKeyDown={handleKeyDown}
       />
       {show && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md">
+        <div
+          className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto overscroll-contain rounded-md border bg-background shadow-md"
+          // cegah kolom kehilangan fokus (dan daftar menutup) saat pengguna menyeret scrollbar
+          onMouseDown={(e) => e.preventDefault()}
+        >
           <ul id={listId} role="listbox">
             {items.map((s, i) => (
               <li

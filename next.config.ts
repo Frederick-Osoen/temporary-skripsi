@@ -6,6 +6,9 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : null
 
 const nextConfig: NextConfig = {
+  // Halaman admin dinamis (butuh login + database). Simpan hasil kunjungan 30 detik di peramban
+  // supaya pindah menu bolak-balik terasa instan. Aksi simpan/ubah tetap memuat ulang datanya.
+  experimental: { staleTimes: { dynamic: 30 } },
   serverExternalPackages: ['undici'],
   async headers() {
     // sw.js tidak boleh di-cache lama agar pembaruan service worker sampai ke pengguna

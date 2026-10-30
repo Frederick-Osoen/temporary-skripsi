@@ -5,10 +5,10 @@ import { MapPin } from 'lucide-react'
 import { BUSINESS } from '@/lib/public/business'
 
 /** Peta dimuat hanya setelah diklik: halaman tetap ringan dan tidak memuat skrip Google tanpa izin. */
-export function MapEmbed() {
+export function MapEmbed({ compact = false }: { compact?: boolean }) {
   const [load, setLoad] = useState(false)
   return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border bg-ink sm:aspect-[16/10]">
+    <div className={`relative overflow-hidden rounded-2xl border bg-ink ${compact ? 'h-44' : 'aspect-[4/3] sm:aspect-[16/10]'}`}>
       {load ? (
         <iframe
           src={BUSINESS.mapsEmbedUrl}

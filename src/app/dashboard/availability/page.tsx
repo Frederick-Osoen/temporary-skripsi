@@ -83,7 +83,7 @@ export default async function AvailabilityPage({ searchParams }: { searchParams:
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
               <tr className="border-b bg-muted/40 text-xs">
-                <th scope="col" className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-left font-medium">Produk</th>
+                <th scope="col" className="sticky left-0 z-10 bg-[color-mix(in_srgb,var(--muted)_40%,var(--background))] px-3 py-2 text-left font-medium">Produk</th>
                 {dates.map((d) => (
                   <th key={d} scope="col" className={cn('px-1.5 py-2 text-center font-medium', d === todayWIB() && 'text-primary')}>
                     {dayFmt.format(new Date(`${d}T00:00:00Z`))}

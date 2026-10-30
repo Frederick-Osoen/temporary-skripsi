@@ -52,6 +52,10 @@ export default async function ContactPage() {
             >
               <Navigation className="size-4" aria-hidden="true" /> Buka di Google Maps
             </a>
+            {/* Mobile: peta ringkas persis di bawah alamat. Desktop tetap memakai peta di kolom kanan. */}
+            <div className="mt-4 lg:hidden">
+              <MapEmbed compact />
+            </div>
           </div>
 
           <div>
@@ -70,7 +74,25 @@ export default async function ContactPage() {
             )}
           </div>
 
-          
+          {(store_phone || contact_email) && (
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Hubungi kami</h2>
+              <ul className="mt-3 space-y-2.5">
+                {store_phone && (
+                  <li className="flex items-center gap-3">
+                    <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium underline-offset-4 hover:underline">{store_phone}</a>
+                  </li>
+                )}
+                {contact_email && (
+                  <li className="flex items-center gap-3">
+                    <Mail className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all underline-offset-4 hover:underline">{contact_email}</a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
 
           <div>
             <h2 className="font-heading text-lg font-semibold">Area layanan</h2>
@@ -78,27 +100,6 @@ export default async function ContactPage() {
               Melayani Jawa, Bali, dan Lombok. Gratis ongkir dalam radius {BUSINESS.freeRadiusKm} km dari gudang.
             </p>
           </div>
-
-
-          {(store_phone || contact_email) && (
-            <div>
-              <h2 className="font-heading text-lg font-semibold">Hubungi kami</h2>
-              <ul className="mt-3 space-y-2.5">
-                {contact_email && (
-                  <li className="flex items-center gap-3">
-                    <Mail className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                    <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all underline-offset-4 hover:underline">{contact_email}</a>
-                  </li>
-                )}
-                {store_phone && (
-                  <li className="flex items-center gap-3">
-                    <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                    <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium underline-offset-4 hover:underline">{store_phone}</a>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
 
           {(instagram_url || tiktok_url) && (
             <div>
@@ -120,7 +121,9 @@ export default async function ContactPage() {
         </div>
 
         <div className="space-y-6 lg:col-span-7">
-          <MapEmbed />
+          <div className="hidden lg:block">
+            <MapEmbed />
+          </div>
           {/* TODO(owner): ganti dengan foto toko yang diambil sendiri (foto ini tampak berasal dari Google Maps). */}
           <figure>
             <Image
