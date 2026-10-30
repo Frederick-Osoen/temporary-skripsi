@@ -52,6 +52,10 @@ export default async function ContactPage() {
             >
               <Navigation className="size-4" aria-hidden="true" /> Buka di Google Maps
             </a>
+            {/* Mobile: peta ringkas persis di bawah alamat. Desktop tetap memakai peta di kolom kanan. */}
+            <div className="mt-4 lg:hidden">
+              <MapEmbed compact />
+            </div>
           </div>
 
           <div>
@@ -117,7 +121,9 @@ export default async function ContactPage() {
         </div>
 
         <div className="space-y-6 lg:col-span-7">
-          <MapEmbed />
+          <div className="hidden lg:block">
+            <MapEmbed />
+          </div>
           {/* TODO(owner): ganti dengan foto toko yang diambil sendiri (foto ini tampak berasal dari Google Maps). */}
           <figure>
             <Image

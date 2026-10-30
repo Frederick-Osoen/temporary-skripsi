@@ -119,7 +119,7 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
             >
               <Menu className="size-5" />
             </SheetTrigger>
-            <SheetContent side="right" className={cn('theme-public w-[min(22rem,88vw)] border-0 bg-ink p-0 text-white [&_[data-slot=sheet-close]]:top-5 [&_[data-slot=sheet-close]]:text-white [&_[data-slot=sheet-close]]:hover:bg-white/10', unbounded.variable, geologica.variable)}>
+            <SheetContent side="right" className={cn('theme-public w-[min(22rem,88vw)] border-0 bg-ink! p-0 text-white! [&_[data-slot=sheet-close]]:top-5 [&_[data-slot=sheet-close]]:text-white [&_[data-slot=sheet-close]]:hover:bg-white/10', unbounded.variable, geologica.variable)}>
               <SheetHeader className="px-5 pt-5 pb-2 text-left">
                 <SheetTitle className="text-white">
                   <Wordmark tone="night" />

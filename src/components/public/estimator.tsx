@@ -30,8 +30,8 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section aria-labelledby={`langkah-${step}`} className="panel overflow-hidden">
-      <header className="flex items-start gap-3 border-b bg-muted/40 px-4 py-3.5 sm:px-5">
+    <section aria-labelledby={`langkah-${step}`} className="panel">
+      <header className="flex items-start gap-3 rounded-t-[inherit] border-b bg-muted/40 px-4 py-3.5 sm:px-5">
         <span className="num mt-0.5 text-sm font-bold text-primary">{step}</span>
         <div>
           <h2 id={`langkah-${step}`} className="font-heading text-base font-semibold">
@@ -111,28 +111,34 @@ export function Estimator(props: EstimatorProps) {
     )
 
   return (
-    <div className="pb-28 lg:pb-0">
-      {/* Penanda kemajuan */}
-      <ol className="mb-8 flex items-center gap-2 sm:gap-3">
-        {STEP_LABELS.map((label, i) => (
-          <li key={label} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-            <span
-              className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
-                done[i] ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-muted-foreground'
-              )}
-              aria-hidden="true"
-            >
-              {done[i] ? <Check className="size-3.5" /> : i + 1}
-            </span>
-            <span className={cn('truncate text-xs font-medium sm:text-sm', done[i] ? 'text-foreground' : 'text-muted-foreground')}>
-              {label}
-              <span className="sr-only">{done[i] ? ' selesai' : ' belum selesai'}</span>
-            </span>
-            {i < STEP_LABELS.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden="true" />}
-          </li>
-        ))}
-      </ol>
+    <div className="pb-28 lg:pb-0 [&_.grid>*]:min-w-0">
+      {/* Penanda kemajuan: di layar kecil menempel di bawah navbar dan hanya langkah aktif yang berlabel */}
+      {(() => {
+        const current = done.findIndex((d) => !d)
+        const activeIdx = current === -1 ? STEP_LABELS.length - 1 : current
+        return (
+          <ol className="mb-8 flex items-center gap-2 max-lg:sticky max-lg:top-16 max-lg:z-30 max-lg:-mx-4 max-lg:mb-6 max-lg:border-b max-lg:bg-background/95 max-lg:px-4 max-lg:py-3 max-lg:backdrop-blur-md sm:gap-3">
+            {STEP_LABELS.map((label, i) => (
+              <li key={label} className={cn('flex min-w-0 items-center gap-2 sm:flex-1 sm:gap-3', i === activeIdx ? 'flex-none max-sm:flex-1' : 'max-sm:flex-none')}>
+                <span
+                  className={cn(
+                    'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
+                    done[i] ? 'border-primary bg-primary text-primary-foreground' : i === activeIdx ? 'border-primary text-primary' : 'border-border bg-background text-muted-foreground'
+                  )}
+                  aria-hidden="true"
+                >
+                  {done[i] ? <Check className="size-3.5" /> : i + 1}
+                </span>
+                <span className={cn('truncate text-xs font-medium sm:text-sm', done[i] ? 'text-foreground' : 'text-muted-foreground', i === activeIdx ? 'max-sm:text-foreground' : 'max-sm:sr-only')}>
+                  {label}
+                  <span className="sr-only">{done[i] ? ' selesai' : ' belum selesai'}</span>
+                </span>
+                {i < STEP_LABELS.length - 1 && <span className="h-px min-w-3 flex-1 bg-border" aria-hidden="true" />}
+              </li>
+            ))}
+          </ol>
+        )
+      })()}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="space-y-5 lg:col-span-7">
@@ -571,7 +577,7 @@ export function Estimator(props: EstimatorProps) {
                 )}
               </dl>
 
-              <div className="flex items-end justify-between gap-4 border-t border-dashed pt-4">
+              <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-t border-dashed pt-4">
                 <span className="text-sm font-medium">Perkiraan total</span>
                 <span className="text-right">
                   <span className="num block text-3xl font-bold text-ink">{formatRupiah(result.total)}</span>

@@ -87,7 +87,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pt-10 pb-16 sm:pt-14 lg:grid-cols-12 lg:gap-6 lg:pt-16 lg:pb-24">
           <div className="lg:col-span-5">
             <h1>
-              <span className="block font-heading text-[2.65rem] leading-[0.98] font-semibold sm:text-6xl lg:text-[4.1rem]">
+              <span className="block font-heading text-[2.65rem] leading-[0.98] font-semibold tracking-[-0.005em] sm:text-6xl lg:text-[4.1rem]">
                 Sejuk sebelum tamu datang.
               </span>
               <span className="mt-5 block max-w-md font-sans text-lg leading-snug font-normal tracking-normal text-white/75 sm:text-xl">

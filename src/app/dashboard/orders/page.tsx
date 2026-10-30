@@ -268,14 +268,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input name="q" defaultValue={q} placeholder="Cari kode, nama, telepon, atau tujuan..." className="pl-8" aria-label="Cari pesanan" />
         </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          Acara dari
-          <Input type="date" name="from" defaultValue={from} className="w-auto" />
-        </label>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          sampai
-          <Input type="date" name="to" defaultValue={to} className="w-auto" />
-        </label>
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+            Acara dari
+            <Input type="date" name="from" defaultValue={from} className="w-full sm:w-auto" />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+            sampai
+            <Input type="date" name="to" defaultValue={to} className="w-full sm:w-auto" />
+          </label>
+        </div>
         <select name="sort" defaultValue={sort} className={selectClass} aria-label="Urutkan">
           <option value="new">Terbaru dibuat</option>
           <option value="event">Tanggal acara terbaru</option>
