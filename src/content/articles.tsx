@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BtuCalculator } from '@/components/public/btu-calculator'
 import { STANDARD_HOURS } from '@/lib/orders/schedule'
 
 export type Article = {
@@ -208,6 +209,48 @@ export const ARTICLES: Article[] = [
           Semakin besar kapasitas genset, semakin besar tarif overtime per jamnya. Halaman{' '}
           <Link href="/estimasi">estimasi biaya</Link> menghitung overtime otomatis begitu Anda mengisi jam pemakaian, dan
           harga finalnya tetap dikonfirmasi admin.
+        </p>
+      </>
+    ),
+  },
+  {
+    slug: 'cara-menghitung-kebutuhan-btu-ac',
+    title: 'Cara menghitung kebutuhan BTU AC untuk ruangan',
+    description: 'Rumus sederhana menghitung BTU dari luas, tinggi plafon, jumlah orang, dan peralatan, lengkap dengan kalkulator dan konversi ke PK.',
+    date: '2026-10-30',
+    minutes: 4,
+    body: (
+      <>
+        <p>
+          BTU (British Thermal Unit) per jam adalah ukuran seberapa banyak panas yang sanggup dibuang AC dari ruangan.
+          Makin besar BTU, makin kuat pendinginannya. Spesifikasi AC di toko biasanya ditulis dalam PK, tetapi untuk
+          memilihnya Anda perlu tahu BTU yang dibutuhkan ruangan.
+        </p>
+        <h2>Rumus patokan</h2>
+        <ol>
+          <li><strong>Luas.</strong> Luas ruangan (m²) × 500 BTU/jam, untuk plafon sampai 3 meter.</li>
+          <li><strong>Plafon tinggi.</strong> Bila plafon lebih dari 3 meter, kalikan hasilnya dengan tinggi plafon ÷ 3.</li>
+          <li><strong>Matahari.</strong> Kurangi 10% bila ruangan teduh; tambah 10% bila dinding atau jendela terkena matahari langsung.</li>
+          <li><strong>Orang.</strong> Tambah 600 BTU/jam untuk setiap orang di atas 2 orang.</li>
+          <li><strong>Peralatan.</strong> Tambah 3,4 BTU/jam untuk setiap watt peralatan listrik yang menyala (lampu, komputer, mesin).</li>
+        </ol>
+        <BtuCalculator />
+        <h2>Contoh</h2>
+        <p>
+          Ruang rapat 6×5 m (30 m²), plafon 3 m, terkena matahari sore, diisi 10 orang, dengan proyektor dan laptop total 500 watt.
+        </p>
+        <ul>
+          <li>Luas dan matahari: 30 × 500 × 1,1 = 16.500 BTU/jam</li>
+          <li>Orang: (10 − 2) × 600 = 4.800 BTU/jam</li>
+          <li>Peralatan: 500 × 3,4 ≈ 1.700 BTU/jam</li>
+          <li>Total ≈ <strong>23.000 BTU/jam</strong>, atau sekitar 2,6 PK (1 PK ≈ 9.000 BTU/jam).</li>
+        </ul>
+        <h2>Batasan yang perlu diketahui</h2>
+        <p>
+          Hitungan ini untuk <strong>ruangan tertutup berdinding</strong> dan hanya perkiraan awal. Arah bangunan, bahan atap,
+          ventilasi, dan seberapa dingin yang Anda inginkan ikut mempengaruhi. Untuk acara di tenda atau area terbuka,
+          kebutuhannya jauh lebih besar daripada hasil rumus ini karena panas terus masuk dan udara dingin mudah keluar.
+          Pakai <Link href="/kalkulator">kalkulator kebutuhan acara</Link>, lalu pastikan ke admin kami.
         </p>
       </>
     ),

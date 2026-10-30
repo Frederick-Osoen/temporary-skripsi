@@ -3,7 +3,7 @@
 import { useId, useState } from 'react'
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
-import { recommendKva, type GensetRule } from '@/lib/public/genset'
+import { coveredAcLimit, recommendKva, type GensetRule } from '@/lib/public/genset'
 import { estimateNeeds, MANUAL_ABOVE, VENUE_LABEL, type Venue } from '@/lib/public/needs'
 import { waLink } from '@/lib/public/business'
 import { cn } from '@/lib/utils'
@@ -47,8 +47,9 @@ function Field({
             value={value}
             onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value) || 0)))}
             aria-label={`${label} (${unit})`}
+            style={{ width: `${Math.max(String(value).length, 4) + 2}ch` }}
             className={cn(
-              'num w-20 rounded-md bg-transparent text-right text-2xl font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              'num min-w-[5.5ch] rounded-md bg-transparent px-1 text-right text-2xl font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
               night ? 'text-white' : 'text-ink'
             )}
           />
@@ -85,7 +86,11 @@ export function NeedsCalculator({
   const [people, setPeople] = useState(200)
 
   const res = estimateNeeds({ areaM2: area, people, venue })
-  const manual = res.acUnits > MANUAL_ABOVE
+  // Batas "hitung manual" mengikuti aturan genset yang diatur owner (Pengaturan). MANUAL_ABOVE hanya cadangan bila belum ada aturan.
+  const covered = coveredAcLimit(rules)
+  const manualAbove = covered === 0 ? MANUAL_ABOVE : covered
+  const topKva = rules.length ? Math.max(...rules.map((r) => r.kva)) : null
+  const manual = manualAbove !== null && res.acUnits > manualAbove
   const kva = res.acUnits > 0 && !manual ? recommendKva(res.acUnits, rules) : null
   const shown = Math.min(res.acUnits, MAX_ICONS)
 
@@ -148,7 +153,7 @@ export function NeedsCalculator({
           <div>
             <dt className={night ? 'text-white/60' : 'text-muted-foreground'}>Genset yang disarankan</dt>
             <dd className={cn('num mt-1 text-2xl font-semibold', night ? 'text-volt' : 'text-ink')}>
-              {kva ? `${kva} kVA` : res.acUnits === 0 ? '-' : manual ? 'Biasanya 250 kVA' : rules.length === 0 ? 'Dihitung admin' : 'Custom'}
+              {kva ? `${kva} kVA` : res.acUnits === 0 ? '-' : manual ? (topKva ? `Biasanya ${topKva} kVA` : 'Dihitung admin') : rules.length === 0 ? 'Dihitung admin' : 'Custom'}
             </dd>
           </div>
           <div>
@@ -161,7 +166,7 @@ export function NeedsCalculator({
 
         <p className={cn('mt-5 text-xs leading-relaxed', night ? 'text-white/55' : 'text-muted-foreground')}>
           {manual
-            ? `Kebutuhan di atas ${MANUAL_ABOVE} unit AC dihitung manual oleh admin (umumnya memakai genset 250 kVA). Kirim hasil ini ke admin untuk dihitung bersama.`
+            ? `Kebutuhan di atas ${manualAbove} unit AC dihitung manual oleh admin${topKva ? ` (umumnya memakai genset ${topKva} kVA)` : ''}. Kirim hasil ini ke admin untuk dihitung bersama.`
             : 'Ini perkiraan kasar. Tinggi atap, ventilasi, dan jam acara ikut menentukan; admin akan memastikan jumlah finalnya.'}
         </p>
 

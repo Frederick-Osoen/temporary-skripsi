@@ -14,7 +14,9 @@ const nextConfig: NextConfig = {
   images: {
     // Jaringan IPv6/DNS64 (NAT64) membuat host Supabase terbaca sebagai IP privat saat pengembangan.
     // Aman: hanya host Supabase di remotePatterns yang boleh dimuat. Produksi tetap ketat.
-    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
+    // `npm run build && npm start` di jaringan seperti itu juga berstatus production, sehingga foto tidak muncul.
+    // Untuk uji lokal saja, jalankan dengan ALLOW_LOCAL_IMAGE_IP=1. JANGAN diset di Vercel.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production' || process.env.ALLOW_LOCAL_IMAGE_IP === '1',
     remotePatterns: supabaseHost
       ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/product-images/**' }]
       : [],

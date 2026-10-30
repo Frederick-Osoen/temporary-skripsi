@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { MapPin, MessageCircle } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
 import { Wordmark } from './brand-mark'
+import { InstagramIcon, TikTokIcon } from './social-icons'
 
 const COLS = [
   {
@@ -96,22 +97,21 @@ export async function SiteFooter() {
               <MapPin className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
               {fullAddress}
             </a>
-            {store_phone && (
-              <p className="text-white/65">
-                Telp. <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
-              </p>
-            )}
+            
             {contact_email && (
-              <p className="text-white/65">
-                Email <a href={`mailto:${contact_email}`} className="focus-ink rounded break-all underline-offset-4 hover:underline">{contact_email}</a>
+              <p className="flex gap-2 text-white/65">
+                <Mail className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
+                <a href={`mailto:${contact_email}`} className="focus-ink rounded break-all underline-offset-4 hover:underline">{contact_email}</a>
               </p>
             )}
-            {(instagram_url || tiktok_url) && (
-              <p className="flex flex-wrap gap-x-4 gap-y-1 text-white/65">
-                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">Instagram</a>}
-                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded underline-offset-4 hover:underline">TikTok</a>}
+            {store_phone && (
+              <p className="flex gap-2 text-white/65">
+                <Phone className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
+                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
               </p>
             )}
+
+            {/* Jam Buka */}
             {hours.length > 0 ? (
               <ul className="space-y-1 text-white/65">
                 {hours.map((h) => (
@@ -128,8 +128,20 @@ export async function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-6 gap-y-2 px-4 pt-6 pb-28 text-xs text-white/50 sm:pb-8">
-          <p>© {new Date().getFullYear()} JJ Teknik, Pandaan.</p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 pt-6 pb-28 text-xs text-white/50 sm:pb-8">
+          <div className="flex items-center gap-3">
+            <p>© {new Date().getFullYear()} JJ Teknik, Pandaan.</p>
+            {instagram_url && (
+              <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram JJ Teknik" className="focus-ink rounded-full p-1 text-white/60 transition-colors hover:text-white">
+                <InstagramIcon className="size-[18px]" />
+              </a>
+            )}
+            {tiktok_url && (
+              <a href={tiktok_url} target="_blank" rel="noopener noreferrer" aria-label="TikTok JJ Teknik" className="focus-ink rounded-full p-1 text-white/60 transition-colors hover:text-white">
+                <TikTokIcon className="size-[18px]" />
+              </a>
+            )}
+          </div>
           <p>Harga di situs ini estimasi. Harga final disepakati lewat WhatsApp.</p>
         </div>
       </div>

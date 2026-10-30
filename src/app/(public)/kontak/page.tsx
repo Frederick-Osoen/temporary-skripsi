@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { MapPin, MessageCircle, Navigation } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Navigation, Phone } from 'lucide-react'
 import { JsonLd, localBusinessLd } from '@/components/public/json-ld'
 import { MapEmbed } from '@/components/public/map-embed'
 import { PageHero } from '@/components/public/page-hero'
+import { InstagramIcon, TikTokIcon } from '@/components/public/social-icons'
 import { BUSINESS, fullAddress, waLink } from '@/lib/public/business'
 import { getStoreSettings, parseOpeningHours } from '@/lib/settings'
 
@@ -43,26 +44,6 @@ export default async function ContactPage() {
               <MapPin className="mt-1 size-4 shrink-0 text-primary" aria-hidden="true" />
               {fullAddress}
             </p>
-            {store_phone && (
-              <p className="mt-3 text-muted-foreground">
-                Telepon:{' '}
-                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">
-                  {store_phone}
-                </a>
-              </p>
-            )}
-            {contact_email && (
-              <p className="mt-3 text-muted-foreground">
-                Email:{' '}
-                <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all text-foreground underline-offset-4 hover:underline">{contact_email}</a>
-              </p>
-            )}
-            {(instagram_url || tiktok_url) && (
-              <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
-                {instagram_url && <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">Instagram</a>}
-                {tiktok_url && <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink rounded font-medium text-foreground underline-offset-4 hover:underline">TikTok</a>}
-              </p>
-            )}
             <a
               href={BUSINESS.mapsUrl}
               target="_blank"
@@ -89,12 +70,53 @@ export default async function ContactPage() {
             )}
           </div>
 
+          
+
           <div>
             <h2 className="font-heading text-lg font-semibold">Area layanan</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Melayani Jawa, Bali, dan Lombok. Gratis ongkir dalam radius {BUSINESS.freeRadiusKm} km dari gudang.
             </p>
           </div>
+
+
+          {(store_phone || contact_email) && (
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Hubungi kami</h2>
+              <ul className="mt-3 space-y-2.5">
+                {contact_email && (
+                  <li className="flex items-center gap-3">
+                    <Mail className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`mailto:${contact_email}`} className="focus-ink rounded font-medium break-all underline-offset-4 hover:underline">{contact_email}</a>
+                  </li>
+                )}
+                {store_phone && (
+                  <li className="flex items-center gap-3">
+                    <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded font-medium underline-offset-4 hover:underline">{store_phone}</a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          {(instagram_url || tiktok_url) && (
+            <div>
+              <h2 className="font-heading text-lg font-semibold">Temukan kami juga di</h2>
+              <p className="mt-3 flex flex-wrap gap-2">
+                {instagram_url && (
+                  <a href={instagram_url} target="_blank" rel="noopener noreferrer" className="focus-ink inline-flex h-11 items-center gap-2 rounded-full border border-input bg-card px-5 text-sm font-medium transition-colors hover:bg-muted">
+                    <InstagramIcon className="size-4" /> Instagram
+                  </a>
+                )}
+                {tiktok_url && (
+                  <a href={tiktok_url} target="_blank" rel="noopener noreferrer" className="focus-ink inline-flex h-11 items-center gap-2 rounded-full border border-input bg-card px-5 text-sm font-medium transition-colors hover:bg-muted">
+                    <TikTokIcon className="size-4" /> TikTok
+                  </a>
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6 lg:col-span-7">

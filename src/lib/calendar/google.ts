@@ -38,13 +38,14 @@ async function accessToken(): Promise<string> {
 export type CalEvent = {
   summary: string
   description: string
-  date: string // YYYY-MM-DD (acara sehari penuh)
+  date: string // YYYY-MM-DD (hari pertama)
+  endDate?: string // YYYY-MM-DD, hari terakhir (inklusif); kosong = acara sehari penuh
   colorId: string
   orderId: string
 }
 
 const body = (e: CalEvent) => {
-  const next = new Date(e.date + 'T00:00:00Z')
+  const next = new Date((e.endDate ?? e.date) + 'T00:00:00Z')
   next.setUTCDate(next.getUTCDate() + 1)
   return {
     summary: e.summary,

@@ -2,6 +2,8 @@ import { getCurrentAdmin } from '@/lib/auth'
 import { AuthProblem } from '@/components/dashboard/auth-problem'
 import { SettingsForm } from '@/components/dashboard/settings/settings-form'
 import { NotifyTester } from '@/components/dashboard/settings/notify-tester'
+import { GensetRulesEditor } from '@/components/dashboard/settings/genset-rules-editor'
+import type { GensetRule } from '@/lib/public/genset'
 import { getNotifyStatus } from './notify-actions'
 import { rowToSettings } from '@/lib/settings'
 import { opsSource } from '@/lib/notify/recipients'
@@ -19,12 +21,14 @@ export default async function SettingsPage() {
   // Kolom dari fase-9d.sql belum ada: kartu baru dikunci dan owner diberi tahu
   const needs9d = !missing && !('instagram_url' in (data as object))
   const source = await opsSource()
+  const { data: ruleRows } = await admin.supabase.from('genset_rules').select('min_ac, max_ac, kva').order('min_ac')
+  const rules: GensetRule[] = (ruleRows ?? []).map((x) => ({ min_ac: x.min_ac, max_ac: x.max_ac, kva: x.kva }))
 
   return (
     <div className="max-w-2xl space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground">Kontak, sosmed, jam buka toko, tarif BBM, dan penerima email.</p>
+        <p className="text-sm text-muted-foreground">Kontak, sosmed, jam buka toko, tarif BBM, aturan genset, dan penerima email.</p>
       </div>
       {missing && (
         <p role="alert" className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -37,6 +41,7 @@ export default async function SettingsPage() {
         </p>
       )}
       <SettingsForm initial={initial} canEdit={!missing && admin.role === 'owner'} extendedReady={!needs9d} emailSource={source} />
+      <GensetRulesEditor initial={rules} canEdit={!missing && admin.role === 'owner'} ready />
       {admin.role === 'owner' && <NotifyTester status={await getNotifyStatus()} />}
     </div>
   )
