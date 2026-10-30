@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, MessageCircle, ShoppingBasket } from 'lucide-react'
+import { ArrowRight, Menu, MessageCircle, ShoppingBasket } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useCart } from '@/lib/public/cart'
@@ -12,19 +12,18 @@ import { cn } from '@/lib/utils'
 import { geologica, unbounded } from '@/app/(public)/fonts'
 import { Wordmark } from './brand-mark'
 
+// Urutan mengikuti perjalanan pembeli: lihat produk -> hitung kebutuhan -> bukti hasil kerja -> pelajari -> hubungi
 const NAV = [
   { href: '/katalog', label: 'Katalog' },
   { href: '/kalkulator', label: 'Kalkulator' },
   { href: '/galeri', label: 'Galeri' },
+  { href: '/testimoni', label: 'Testimoni' },
   { href: '/artikel', label: 'Artikel' },
   { href: '/tentang', label: 'Tentang' },
   { href: '/kontak', label: 'Kontak' },
 ]
-const MOBILE_EXTRA = [
-  { href: '/', label: 'Beranda' },
-  { href: '/estimasi', label: 'Estimasi biaya' },
-  { href: '/testimoni', label: 'Testimoni' },
-]
+// Di drawer HP, Katalog dan Estimasi biaya jadi tombol besar di atas; sisanya daftar tautan biasa
+const DRAWER_LINKS = [{ href: '/', label: 'Beranda' }, ...NAV.filter((n) => n.href !== '/katalog')]
 
 // Halaman yang dibuka dengan band malam: header ikut gelap sampai digulir.
 // Tambahkan rute di sini bila seksi pertama halaman baru memakai `band-night`.
@@ -125,8 +124,26 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
                   <Wordmark tone="night" />
                 </SheetTitle>
               </SheetHeader>
+              <div className="space-y-2.5 px-5 pt-3">
+                <Link
+                  href="/estimasi"
+                  onClick={() => setOpen(false)}
+                  className="focus-ink flex h-14 items-center justify-between rounded-2xl bg-volt px-5 font-heading text-base font-semibold text-volt-foreground"
+                >
+                  Hitung estimasi
+                  <ArrowRight className="size-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/katalog"
+                  onClick={() => setOpen(false)}
+                  className="focus-ink flex h-12 items-center justify-between rounded-2xl px-5 font-heading text-base font-medium text-white ring-1 ring-white/30 ring-inset"
+                >
+                  Lihat katalog
+                  <ArrowRight className="size-4 text-white/70" aria-hidden="true" />
+                </Link>
+              </div>
               <nav aria-label="Navigasi utama" className="flex flex-col px-3 py-4">
-                {[...MOBILE_EXTRA.slice(0, 1), ...NAV, ...MOBILE_EXTRA.slice(1)].map((n) => {
+                {DRAWER_LINKS.map((n) => {
                   const active = isActive(pathname, n.href)
                   return (
                     <Link
@@ -135,7 +152,7 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
                       onClick={() => setOpen(false)}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'focus-ink flex items-center justify-between rounded-xl px-3 py-3 font-heading text-lg font-medium tracking-tight',
+                        'focus-ink flex items-center justify-between rounded-xl px-3 py-2.5 font-heading text-base font-medium tracking-tight',
                         active ? 'bg-white/10 text-white' : 'text-white/70'
                       )}
                     >
@@ -150,7 +167,7 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
                   href={waLink(waNumber)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="focus-ink flex h-12 items-center justify-center gap-2 rounded-full bg-volt font-semibold text-volt-foreground"
+                  className="focus-ink flex h-12 items-center justify-center gap-2 rounded-full bg-wa font-semibold text-white"
                 >
                   <MessageCircle className="size-4" aria-hidden="true" /> Chat admin via WhatsApp
                 </a>

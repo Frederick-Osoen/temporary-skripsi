@@ -174,7 +174,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Di HP tombol selalu di baris sendiri, supaya tidak berpindah saat teks "sesuai filter" muncul */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Pesanan</h1>
           <p className="text-sm text-muted-foreground">{matched} pesanan{hasFilter ? ' sesuai filter' : ''}.</p>
