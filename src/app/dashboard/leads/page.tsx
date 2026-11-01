@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { AutoRefresh } from '@/components/dashboard/auto-refresh'
 import { LeadsList } from '@/components/dashboard/leads/leads-list'
 import type { LeadRow } from '@/lib/leads'
 
@@ -37,6 +38,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-4">
+      <AutoRefresh seconds={30} />
       <div>
         <h1 className="text-xl font-semibold">Leads</h1>
         <p className="text-sm text-muted-foreground">

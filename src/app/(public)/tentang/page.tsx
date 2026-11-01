@@ -159,17 +159,17 @@ export default async function AboutPage() {
             {TEAM.length > 0 && (
               <ul className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
                 {TEAM.map((m) => (
-                  <li key={m.name}>
+                  <li key={m.photo}>
                     <Image
                       src={m.photo}
-                      alt={`${m.name}, ${m.role} JJ Teknik`}
+                      alt={`${[m.name || 'Tim', m.role].filter(Boolean).join(', ')} JJ Teknik`}
                       width={800}
                       height={1000}
                       sizes="(min-width: 1024px) 17rem, (min-width: 640px) 33vw, 50vw"
                       className="aspect-[4/5] h-auto w-full rounded-2xl border object-cover"
                     />
-                    <p className="mt-3 font-heading text-base font-semibold">{m.name}</p>
-                    <p className="text-sm text-muted-foreground">{m.role}</p>
+                    {m.name && <p className="mt-3 font-heading text-base font-semibold">{m.name}</p>}
+                    {m.role && <p className="text-sm text-muted-foreground">{m.role}</p>}
                   </li>
                 ))}
               </ul>
