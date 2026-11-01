@@ -9,7 +9,12 @@
 // Urutan di sini = urutan tampil.
 export type TeamMember = { name: string; role: string; photo: string }
 
-export const TEAM: TeamMember[] = []
+// Nama/jabatan anggota tim sengaja dikosongkan dulu (foto saja); isi nanti, kolom kosong tidak ditampilkan.
+export const TEAM: TeamMember[] = [
+  { name: 'Claudemas Yafune Agnosatama', role: 'Pemilik JJ Teknik', photo: '/tim/owner.jpg' },
+  { name: '', role: '', photo: '/tim/anggota-1.jpg' },
+  { name: '', role: '', photo: '/tim/anggota-2.jpg' },
+]
 
 // Foto bersama tim (opsional, lebar). Contoh: { src: '/tim/tim-lapangan.jpg', alt: 'Tim JJ Teknik di depan truk engkel' }
 export const TEAM_PHOTO: { src: string; alt: string } | null = null

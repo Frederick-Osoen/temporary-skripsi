@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyNewLead } from '@/lib/notify/events'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { makeRefCode, REF_CODE_RE } from '@/lib/lead-ref'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ const MAX_BODY_CHARS = 20_000
 const LIMIT = { max: 5, windowSec: 60 } // per IP
 
 const leadSchema = z.object({
+  ref_code: z.string().regex(REF_CODE_RE).optional(),
   customer_name: z.string().trim().max(100).optional(),
   total_estimate: z.number().int().min(0).max(1_000_000_000),
   payload: z.object({
@@ -77,17 +79,38 @@ export async function POST(request: Request) {
   }
 
   // 5) Simpan. Gagal menyimpan lead tidak boleh mengganggu pelanggan, jadi hanya dicatat di log.
-  const { customer_name, total_estimate, payload } = parsed.data
-  const { error } = await supabase.from('leads').insert({
-    customer_name: customer_name || 'Tanpa nama',
-    total_estimate,
-    payload,
-    status: 'new',
-  })
+  const { customer_name, total_estimate, payload, ref_code } = parsed.data
+  const name = customer_name || 'Tanpa nama'
+
+  // Kode yang sama dikirim ulang (pelanggan mengubah estimasi lalu menekan tombol lagi): perbarui lead-nya
+  // selama masih "Baru" dan belum 24 jam, supaya admin hanya melihat satu lead per kode.
+  if (ref_code) {
+    const { data: existing } = await supabase.from('leads').select('id, status, created_at').eq('ref_code', ref_code).maybeSingle()
+    if (existing) {
+      const fresh = Date.now() - new Date(existing.created_at as string).getTime() < 24 * 3600_000
+      if (existing.status === 'new' && fresh) {
+        const { error: upErr } = await supabase.from('leads').update({ customer_name: name, total_estimate, payload }).eq('id', existing.id)
+        if (upErr) {
+          console.error('[leads] update gagal:', upErr)
+          return NextResponse.json({ ok: false }, { status: 500 })
+        }
+        return ok()
+      }
+    }
+  }
+
+  let code: string | null = ref_code ?? null
+  let error: { code?: string } | null = null
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await supabase.from('leads').insert({ customer_name: name, total_estimate, payload, status: 'new', ref_code: code })
+    error = res.error
+    if (!error || error.code !== '23505') break
+    code = makeRefCode() // bentrok kode (sangat jarang): pakai kode baru
+  }
   if (error) {
     console.error('[leads] insert gagal:', error)
     return NextResponse.json({ ok: false }, { status: 500 })
   }
-  after(() => notifyNewLead({ customer_name: customer_name || 'Tanpa nama', total_estimate, payload }).catch((e) => console.error('[leads] email gagal:', e)))
+  after(() => notifyNewLead({ customer_name: name, total_estimate, payload, ref_code: code }).catch((e) => console.error('[leads] email gagal:', e)))
   return ok()
 }

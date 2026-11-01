@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { KeyRound, Plus, Trash2, UserCheck, UserX } from 'lucide-react'
+import { KeyRound, Pencil, Plus, Trash2, UserCheck, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,7 +9,7 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { createAdmin, deleteAdmin, resetAdminPassword, setAdminActive } from '@/app/dashboard/admins/actions'
+import { createAdmin, deleteAdmin, renameAdmin, resetAdminPassword, setAdminActive } from '@/app/dashboard/admins/actions'
 import { safeAction } from '@/lib/action-client'
 
 export type AdminItem = { id: string; name: string; role: 'owner' | 'admin'; email: string; active: boolean; isMe: boolean }
@@ -23,6 +23,8 @@ export function AdminManager({ items }: { items: AdminItem[] }) {
   const [resetting, setResetting] = useState<AdminItem | null>(null)
   const [newPw, setNewPw] = useState('')
   const [deleting, setDeleting] = useState<AdminItem | null>(null)
+  const [renaming, setRenaming] = useState<AdminItem | null>(null)
+  const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, start] = useTransition()
@@ -42,13 +44,19 @@ export function AdminManager({ items }: { items: AdminItem[] }) {
   }
   const toggle = (a: AdminItem) => {
     setError(null); setNotice(null)
-    start(async () => done(await safeAction(() => setAdminActive(a.id, !a.active)), undefined, a.active ? `${a.name} dinonaktifkan. Sesi yang sedang berjalan berakhir dalam beberapa menit.` : `${a.name} diaktifkan kembali.`))
+    start(async () => done(await safeAction(() => setAdminActive(a.id, !a.active)), undefined, a.active ? `${a.name} dinonaktifkan. Sesi yang sedang berjalan berakhir paling lama dalam 10 menit.` : `${a.name} diaktifkan kembali.`))
   }
   const reset = (e: React.FormEvent) => {
     e.preventDefault()
     if (!resetting) return
     setError(null)
     start(async () => done(await safeAction(() => resetAdminPassword(resetting.id, newPw)), () => { setResetting(null); setNewPw('') }, 'Kata sandi diganti.'))
+  }
+  const rename = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!renaming) return
+    setError(null)
+    start(async () => done(await safeAction(() => renameAdmin(renaming.id, newName)), () => setRenaming(null), 'Nama diubah.'))
   }
   const remove = () => {
     if (!deleting) return
@@ -76,6 +84,11 @@ export function AdminManager({ items }: { items: AdminItem[] }) {
               <Badge variant={a.role === 'owner' ? 'default' : 'secondary'}>{a.role === 'owner' ? 'Owner' : 'Admin'}</Badge>
               {!a.active && <Badge variant="destructive">Nonaktif</Badge>}
             </div>
+            {(a.role === 'admin' || a.isMe) && (
+              <Button size="sm" variant="ghost" onClick={() => { setError(null); setNotice(null); setNewName(a.name); setRenaming(a) }}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" /> Ubah nama
+              </Button>
+            )}
             {a.role === 'admin' && !a.isMe && (
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" disabled={pending} onClick={() => toggle(a)}>
@@ -106,6 +119,20 @@ export function AdminManager({ items }: { items: AdminItem[] }) {
               <p className="text-xs text-muted-foreground">Minimal 8 karakter.</p></div>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={pending}>{pending ? 'Menyimpan…' : 'Tambah'}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!renaming} onOpenChange={(o) => !o && setRenaming(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ubah nama</DialogTitle>
+            <DialogDescription>Email dan peran tidak berubah. Nama baru tampil di dashboard dan riwayat.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={rename} className="space-y-4">
+            <input aria-label="Nama baru" className={field} value={newName} onChange={(e) => setNewName(e.target.value)} />
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={pending}>{pending ? 'Menyimpan…' : 'Simpan'}</Button>
           </form>
         </DialogContent>
       </Dialog>

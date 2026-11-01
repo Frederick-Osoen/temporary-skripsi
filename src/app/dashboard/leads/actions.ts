@@ -38,3 +38,29 @@ export async function updateLeadStatus(id: string, status: string): Promise<Resu
     return { ok: false, error: 'Terjadi kesalahan pada server. Coba lagi.' }
   }
 }
+
+const seriousSchema = z.object({
+  id: z.string().uuid('ID tidak valid'),
+  seriousness: z.enum(['serious', 'maybe', 'not_serious']).nullable(),
+})
+
+// Penilaian admin atas keseriusan calon pelanggan (terpisah dari status tindak lanjut). null = belum dinilai.
+export async function updateLeadSeriousness(id: string, seriousness: string | null): Promise<Result> {
+  try {
+    const parsed = seriousSchema.safeParse({ id, seriousness })
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+    const ctx = await requireAdmin()
+    if (!ctx.ok) return { ok: false, error: ctx.error, code: ctx.code }
+    const { data, error } = await ctx.supabase.from('leads').update({ seriousness: parsed.data.seriousness }).eq('id', parsed.data.id).select('id')
+    if (error) {
+      console.error('[leads] seriousness:', error)
+      return { ok: false, error: 'Gagal menyimpan penilaian.' }
+    }
+    if (!data?.length) return { ok: false, error: 'Lead tidak ditemukan.' }
+    revalidatePath('/dashboard/leads')
+    return { ok: true }
+  } catch (err) {
+    console.error('[leads] error tak terduga:', err)
+    return { ok: false, error: 'Terjadi kesalahan pada server. Coba lagi.' }
+  }
+}

@@ -117,3 +117,30 @@ export async function deleteAdmin(targetId: string): Promise<Result> {
     return { ok: true }
   })
 }
+
+const renameSchema = createSchema.shape.name
+
+// Owner dapat mengubah nama admin biasa maupun namanya sendiri (salah ketik dll). Email dan peran tidak berubah.
+export async function renameAdmin(targetId: string, name: unknown): Promise<Result> {
+  return run(async () => {
+    const parsed = renameSchema.safeParse(name)
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+    const ctx = await requireOwner()
+    if (!ctx.ok) return { ok: false, error: ctx.error, code: ctx.code }
+    if (!uuid.safeParse(targetId).success) return { ok: false, error: 'ID tidak valid' }
+
+    const db = createAdminClient()
+    if (targetId !== ctx.userId) {
+      const t = await loadTarget(ctx.userId, targetId)
+      if ('error' in t) return { ok: false, error: t.error as string }
+    }
+    const { data, error } = await db.from('admins').update({ name: parsed.data }).eq('id', targetId).select('id')
+    if (error) {
+      console.error('[admins] rename:', error)
+      return { ok: false, error: 'Gagal mengubah nama.' }
+    }
+    if (!data?.length) return { ok: false, error: 'Admin tidak ditemukan.' }
+    revalidatePath('/dashboard', 'layout')
+    return { ok: true }
+  })
+}

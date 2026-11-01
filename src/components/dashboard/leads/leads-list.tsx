@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { updateLeadStatus } from '@/app/dashboard/leads/actions'
+import { updateLeadSeriousness, updateLeadStatus } from '@/app/dashboard/leads/actions'
 import { safeAction } from '@/lib/action-client'
 import { formatDate, formatRupiah } from '@/lib/orders/utils'
-import type { LeadRow, LeadStatus } from '@/lib/leads'
+import type { LeadRow, LeadSeriousness, LeadStatus } from '@/lib/leads'
 
 export type Lead = LeadRow
 
@@ -18,18 +18,28 @@ const STATUS: { value: LeadStatus; label: string; badge: string }[] = [
   { value: 'dismissed', label: 'Diabaikan', badge: 'border-gray-300 bg-gray-100 text-gray-700' },
 ]
 
+const SERIOUS: { value: LeadSeriousness; label: string; on: string }[] = [
+  { value: 'serious', label: 'Serius', on: 'border-green-600 bg-green-600 text-white' },
+  { value: 'maybe', label: '50:50', on: 'border-amber-500 bg-amber-500 text-white' },
+  { value: 'not_serious', label: 'Tidak serius', on: 'border-gray-600 bg-gray-600 text-white' },
+]
+
 const selectClass =
   'h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 const dateTime = new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' })
 
-export function LeadsList({ leads }: { leads: Lead[] }) {
-  const [filter, setFilter] = useState<LeadStatus | 'all'>('new')
+export function LeadsList({ leads, searching = false }: { leads: Lead[]; searching?: boolean }) {
+  // Saat mencari kode/nama, tampilkan semua status supaya lead lama tetap ketemu
+  const [filter, setFilter] = useState<LeadStatus | 'all'>(searching ? 'all' : 'new')
+  const [sFilter, setSFilter] = useState<LeadSeriousness | 'unrated' | 'all'>('all')
   const [error, setError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  const shown = leads.filter((l) => filter === 'all' || l.status === filter)
+  const shown = leads.filter(
+    (l) => (filter === 'all' || l.status === filter) && (sFilter === 'all' || (sFilter === 'unrated' ? !l.seriousness : l.seriousness === sFilter))
+  )
   const countOf = (s: LeadStatus) => leads.filter((l) => l.status === s).length
 
   function change(id: string, status: LeadStatus) {
@@ -37,6 +47,16 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
     setPendingId(id)
     startTransition(async () => {
       const res = await safeAction(() => updateLeadStatus(id, status))
+      if (!res.ok) setError(res.error)
+      setPendingId(null)
+    })
+  }
+
+  function rate(id: string, value: LeadSeriousness | null) {
+    setError(null)
+    setPendingId(id)
+    startTransition(async () => {
+      const res = await safeAction(() => updateLeadSeriousness(id, value))
       if (!res.ok) setError(res.error)
       setPendingId(null)
     })
@@ -51,6 +71,14 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
         {STATUS.map((s) => (
           <Button key={s.value} size="sm" variant={filter === s.value ? 'default' : 'outline'} onClick={() => setFilter(s.value)}>
             {s.label} <span className="ml-1.5 text-xs opacity-70">{countOf(s.value)}</span>
+          </Button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        <span className="mr-1 text-muted-foreground">Keseriusan:</span>
+        {([['all', 'Semua'], ...SERIOUS.map((s) => [s.value, s.label]), ['unrated', 'Belum dinilai']] as [string, string][]).map(([v, label]) => (
+          <Button key={v} size="sm" variant={sFilter === v ? 'default' : 'outline'} className="h-7 px-2.5 text-xs" onClick={() => setSFilter(v as typeof sFilter)}>
+            {label}
           </Button>
         ))}
       </div>
@@ -74,7 +102,11 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold">{l.customer_name}</p>
-                  <p className="text-xs text-muted-foreground">{dateTime.format(new Date(l.created_at))}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {dateTime.format(new Date(l.created_at))}
+                    {l.ref_code && <> · <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-medium text-foreground">{l.ref_code}</span></>}
+                  </p>
+                  {l.auto_archived_at && <p className="text-xs text-muted-foreground">Diarsipkan otomatis (tidak ada tindak lanjut)</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-semibold tabular-nums">
@@ -110,6 +142,22 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
                   </p>
                 )}
                 {p?.notes?.map((n) => <p key={n}>Catatan: {n}</p>)}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Penilaian keseriusan">
+                <span className="mr-1 text-xs text-muted-foreground">Penilaian:</span>
+                {SERIOUS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    disabled={pendingId === l.id}
+                    aria-pressed={l.seriousness === s.value}
+                    onClick={() => rate(l.id, l.seriousness === s.value ? null : s.value)}
+                    className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${l.seriousness === s.value ? s.on : 'bg-background hover:bg-muted'}`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">

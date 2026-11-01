@@ -24,6 +24,8 @@ export type LeadPayload = {
   notes?: string[]
 }
 
+export type LeadSeriousness = 'serious' | 'maybe' | 'not_serious'
+
 export type LeadRow = {
   id: string
   created_at: string
@@ -32,7 +34,11 @@ export type LeadRow = {
   total_estimate: number
   status: LeadStatus
   converted_order_id: string | null
+  ref_code: string | null
+  seriousness: LeadSeriousness | null
+  auto_archived_at: string | null
 }
+
 
 export const ANONYMOUS_LEAD_NAME = 'Tanpa nama'
 
