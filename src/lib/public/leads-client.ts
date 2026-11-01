@@ -18,6 +18,7 @@ export type LeadPayload = {
     shipping_pending: boolean
     notes: string[]
   }
+  ref_code?: string // sama dengan yang tertulis di pesan WhatsApp
   website?: string // honeypot, selalu kosong dari UI sungguhan
 }
 

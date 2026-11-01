@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { retryPendingSyncs } from '@/lib/calendar/sync'
 import { sendDailyDigest, type DigestOrder, type TeardownOrder } from '@/lib/notify/events'
 import { PICKUP_DESTINATION } from '@/lib/validations/order'
+import { LEAD_AUTO_ARCHIVE_DAYS } from '@/lib/lead-ref'
 
 const addDays = (iso: string, n: number) => {
   const d = new Date(iso + 'T00:00:00Z')
@@ -79,5 +80,22 @@ export async function runDailyJob() {
 
   const digest = await sendDailyDigest(list, teardown)
   const sync = await retryPendingSyncs()
-  return { ok: true as const, orders: list.length, teardown: teardown.length, digest, sync }
+
+  // Lead "Baru" yang tidak ditindaklanjuti dalam N hari diarsipkan (status Diabaikan). Gagal tidak menghentikan job.
+  let archivedLeads = 0
+  try {
+    const cutoff = new Date(Date.now() - LEAD_AUTO_ARCHIVE_DAYS * 86400_000).toISOString()
+    const { data: arch, error: archErr } = await createAdminClient()
+      .from('leads')
+      .update({ status: 'dismissed', auto_archived_at: new Date().toISOString() })
+      .eq('status', 'new')
+      .lt('created_at', cutoff)
+      .select('id')
+    if (archErr) console.error('[cron daily] arsip lead:', archErr.message)
+    else archivedLeads = arch?.length ?? 0
+  } catch (e) {
+    console.error('[cron daily] arsip lead:', e)
+  }
+
+  return { ok: true as const, orders: list.length, teardown: teardown.length, digest, sync, archivedLeads }
 }

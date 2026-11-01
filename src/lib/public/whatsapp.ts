@@ -12,11 +12,13 @@ export function buildWhatsAppDraft(args: {
   notes?: string[]
   waNumber?: string
   eventLabel?: string
+  refCode?: string
 }): { text: string; url: string } {
-  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER, eventLabel } = args
+  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER, eventLabel, refCode } = args
   const L: string[] = []
 
   L.push(`Halo ${STORE_NAME}, saya ingin ${result.hasRental ? 'menyewa' : 'membeli'} berikut:`)
+  if (refCode) L.push(`*Kode referensi:* ${refCode}`)
   if (name.trim()) L.push(`*Nama:* ${name.trim()}`)
   if (eventLabel) L.push(`*Jenis acara:* ${eventLabel}`)
   L.push('')

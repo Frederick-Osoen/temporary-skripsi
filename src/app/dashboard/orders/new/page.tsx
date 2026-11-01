@@ -55,6 +55,9 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
           total_estimate: Number(lead.total_estimate ?? 0),
           status: lead.status,
           converted_order_id: lead.converted_order_id ?? null,
+          ref_code: null,
+          seriousness: null,
+          auto_archived_at: null,
         }
         const prefill = leadToOrderValues(row, products)
         initialValues = prefill.values

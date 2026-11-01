@@ -30,9 +30,10 @@ async function orderBrief(orderId: string): Promise<OrderBrief | null> {
 }
 
 // 1) Lead baru dari situs publik
-export async function notifyNewLead(lead: { customer_name: string; total_estimate: number; payload: { items: { name: string; qty: number }[]; start_date: string; end_date: string; destination: string | null; delivery: string } }) {
+export async function notifyNewLead(lead: { ref_code?: string | null; customer_name: string; total_estimate: number; payload: { items: { name: string; qty: number }[]; start_date: string; end_date: string; destination: string | null; delivery: string } }) {
   const p = lead.payload
   const rows: Row[] = [
+    ...(lead.ref_code ? ([['Kode referensi', lead.ref_code]] as Row[]) : []),
     ['Nama', lead.customer_name],
     ['Barang', p.items.map((i) => `${i.name} × ${i.qty}`).join(', ')],
     ['Tanggal', p.start_date === p.end_date ? p.start_date : `${p.start_date} s/d ${p.end_date}`],
@@ -43,7 +44,7 @@ export async function notifyNewLead(lead: { customer_name: string; total_estimat
     href: `${SITE}/dashboard/leads`,
     label: 'Buka Leads',
   })
-  return deliver('lead baru', { to: await opsRecipients(), subject: `Permintaan baru: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
+  return deliver('lead baru', { to: await opsRecipients(), subject: `Permintaan baru${lead.ref_code ? ` ${lead.ref_code}` : ''}: ${lead.customer_name} (${rupiah(lead.total_estimate)})`, html, text })
 }
 
 // 2) Audit ke owner: pembatalan, buka kunci, ubah/hapus pembayaran

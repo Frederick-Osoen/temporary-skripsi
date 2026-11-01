@@ -6,6 +6,7 @@
 
 import { useMemo, useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { makeRefCode } from '@/lib/lead-ref'
 import { isAcProduct } from '@/lib/maintenance'
 import { calcHours, eachDay, STANDARD_HOURS } from '@/lib/orders/schedule'
 import { rentalDays, todayWIB } from '@/lib/orders/utils'
@@ -50,6 +51,9 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     // Keranjang sekarang memakai cart global, bukan state lokal lagi
     const manual = cart.items
 
+    // Kode referensi dibuat sekali per kunjungan supaya sudah ada di teks WhatsApp saat tombol ditekan
+    // (draft baru ada setelah keranjang dimuat di klien, jadi nilai acak ini tidak ikut dirender di server)
+    const [refCode] = useState(makeRefCode)
     const [pick, setPick] = useState('')
     const [useGenset, setUseGenset] = useState(false)
     const [startDate, setStartDate] = useState('')
@@ -250,12 +254,14 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
             distanceKm: shipping.status === 'ok' ? shipping.distance_km : null,
             input, result, notes, waNumber,
             eventLabel: eventType ? EVENT_TYPE_LABEL[eventType] : undefined,
+            refCode: refCode || undefined,
         })
         : null
 
     // Catat lead saat pelanggan menekan "Lanjutkan via WhatsApp" (tidak menghambat pembukaan WhatsApp)
     function recordLead() {
         sendLead({
+            ref_code: refCode || undefined,
             customer_name: name.trim() || undefined,
             total_estimate: Math.round(result.total),
             payload: {
