@@ -127,7 +127,7 @@ export default async function ContactPage() {
           {/* TODO(owner): ganti dengan foto toko yang diambil sendiri (foto ini tampak berasal dari Google Maps). */}
           <figure>
             <Image
-              src="/brand/toko.png"
+              src="/brand/toko.jpg"
               alt="Tampak depan toko JJ Teknik di Jl. Sedap Malam No.16, Pandaan"
               width={1024}
               height={734}

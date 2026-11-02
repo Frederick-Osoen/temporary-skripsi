@@ -216,7 +216,7 @@ export default async function AboutPage() {
           <figure className="lg:col-span-7">
             {/* TODO(owner): ganti dengan foto toko yang diambil sendiri (foto ini tampak berasal dari Google Maps). */}
             <Image
-              src="/brand/toko.png"
+              src="/brand/toko.jpg"
               alt="Tampak depan toko JJ Teknik dengan spanduk biru di Jl. Sedap Malam, Pandaan"
               width={1024}
               height={734}
