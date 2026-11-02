@@ -1,9 +1,9 @@
 import { Search } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { AutoRefresh } from '@/components/dashboard/auto-refresh'
 import { LeadsList } from '@/components/dashboard/leads/leads-list'
 import type { LeadRow } from '@/lib/leads'
+import { AutoRefresh } from '@/components/dashboard/auto-refresh'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,6 +1,8 @@
 {
   "crons": [
     { "path": "/api/cron/keepalive", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/daily", "schedule": "0 23 * * *" }
+    { "path": "/api/cron/daily", "schedule": "0 23 * * *"}
   ]
 }
+
+

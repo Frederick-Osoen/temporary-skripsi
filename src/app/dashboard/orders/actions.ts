@@ -215,7 +215,8 @@ export async function createOrder(
     const phone = normalizePhone(v.phone)
     if (!phone) return fail('Nomor WhatsApp tidak valid')
 
-    const ctx = await requireAdmin()
+    // requireAdminProfile (bukan requireAdmin): aksi ini lanjut memakai service role, jadi status aktif admin harus dicek ke DB
+    const ctx = await requireAdminProfile()
     if (!ctx.ok) return fail(ctx.error, ctx.code)
 
     const prep = await prepareOrder(ctx.supabase, v)
@@ -534,7 +535,8 @@ export async function extendOrder(
     if (!parsed.success) return fail(parsed.error.issues[0].message)
     const v = parsed.data
 
-    const ctx = await requireAdmin()
+    // Jalur ini memicu sinkron kalender/notifikasi (service role): cek status aktif admin ke DB
+    const ctx = await requireAdminProfile()
     if (!ctx.ok) return fail(ctx.error, ctx.code)
 
     const { data, error } = await ctx.supabase.rpc('extend_order', {

@@ -11,7 +11,7 @@ export type TeamMember = { name: string; role: string; photo: string }
 
 // Nama/jabatan anggota tim sengaja dikosongkan dulu (foto saja); isi nanti, kolom kosong tidak ditampilkan.
 export const TEAM: TeamMember[] = [
-  { name: 'Claudemas Yafune Agnosatama', role: 'Pemilik', photo: '/tim/owner.jpg' },
+  { name: 'Claudemas Yafune Agnosatama', role: 'Pemilik JJ Teknik', photo: '/tim/owner.jpg' },
   { name: '', role: '', photo: '/tim/anggota-1.jpg' },
   { name: '', role: '', photo: '/tim/anggota-2.jpg' },
 ]

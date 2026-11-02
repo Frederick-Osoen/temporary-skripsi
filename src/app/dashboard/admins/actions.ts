@@ -73,10 +73,35 @@ export async function setAdminActive(targetId: string, active: boolean): Promise
     if (!ctx.ok) return { ok: false, error: ctx.error, code: ctx.code }
     const t = await loadTarget(ctx.userId, targetId)
     if ('error' in t) return { ok: false, error: t.error as string }
-    const { error } = await t.db.auth.admin.updateUserById(targetId, { ban_duration: active ? 'none' : BAN_FOREVER })
-    if (error) {
-      console.error('[admins] ban:', error)
-      return { ok: false, error: `Gagal mengubah status akun: ${error.message}` }
+    // Urutan: langkah yang MEMBATASI dikerjakan lebih dulu saat menonaktifkan, yang MELONGGARKAN paling akhir
+    // saat mengaktifkan. Kegagalan di tengah jalan selalu berakhir "terlalu ketat" (aman), bisa diulang.
+    const setFlag = async (value: boolean) => {
+      const { data, error } = await t.db.from('admins').update({ is_active: value }).eq('id', targetId).select('id')
+      if (error) console.error('[admins] is_active:', error)
+      return !error && (data?.length ?? 0) > 0
+    }
+    const setBan = async (ban: boolean) => {
+      const { error } = await t.db.auth.admin.updateUserById(targetId, { ban_duration: ban ? BAN_FOREVER : 'none' })
+      if (error) console.error('[admins] ban:', error)
+      return !error
+    }
+
+    if (!active) {
+      // 1) Putus akses seketika (dibaca RLS is_admin() dan requireAdminProfile di setiap request)
+      if (!(await setFlag(false))) return { ok: false, error: 'Gagal menonaktifkan akun. Tidak ada yang berubah, coba lagi.' }
+      // 2) Tutup login baru dan perpanjangan sesi
+      if (!(await setBan(true))) {
+        revalidatePath('/dashboard/admins')
+        return { ok: false, error: 'Akses sudah dicabut, tetapi pemblokiran login gagal. Tekan Nonaktifkan sekali lagi.' }
+      }
+    } else {
+      // 1) Buka ban dulu: kalau gagal, flag masih false sehingga akun tetap tertutup
+      if (!(await setBan(false))) return { ok: false, error: 'Gagal mengaktifkan akun. Akun tetap nonaktif, coba lagi.' }
+      // 2) Baru nyalakan flag
+      if (!(await setFlag(true))) {
+        revalidatePath('/dashboard/admins')
+        return { ok: false, error: 'Blokir login sudah dibuka, tetapi status akun belum aktif. Tekan Aktifkan sekali lagi.' }
+      }
     }
     revalidatePath('/dashboard/admins')
     return { ok: true }

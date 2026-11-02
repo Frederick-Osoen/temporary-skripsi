@@ -39,14 +39,17 @@ export async function requireAdminProfile(): Promise<AdminProfileContext> {
   if (!id.ok) return id
 
   const { data: admin, error } = await retryTransient(() =>
-    id.supabase.from('admins').select('name, role').eq('id', id.userId).maybeSingle()
+    id.supabase.from('admins').select('name, role, is_active').eq('id', id.userId).maybeSingle()
   )
   if (error) {
     // Gagal membaca BUKAN berarti "bukan admin"
     console.error('[auth] gagal membaca admins:', error)
     return fail('UNAVAILABLE', 'Koneksi ke database bermasalah. Coba lagi.')
   }
-  if (!admin) return fail('FORBIDDEN')
+  // Tanpa baris = bukan admin, atau (bila RLS tabel admins bergantung pada is_admin()) sudah dinonaktifkan
+  if (!admin) return fail('FORBIDDEN', 'Akun ini tidak terdaftar atau sudah dinonaktifkan.')
+  // Pemutus akses yang sebenarnya: dicek ke DB di setiap request, jadi berlaku seketika walau JWT masih hidup
+  if (admin.is_active === false) return fail('FORBIDDEN', 'Akun Anda dinonaktifkan. Hubungi owner.')
 
   return { ok: true, supabase: id.supabase, userId: id.userId, role: admin.role as AdminRole, name: admin.name as string }
 }

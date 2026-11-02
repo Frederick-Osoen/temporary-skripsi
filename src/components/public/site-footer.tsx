@@ -97,18 +97,21 @@ export async function SiteFooter() {
               <MapPin className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
               {fullAddress}
             </a>
-            {store_phone && (
-              <p className="flex gap-2 text-white/65">
-                <Phone className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
-                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
-              </p>
-            )}
+            
             {contact_email && (
               <p className="flex gap-2 text-white/65">
                 <Mail className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
                 <a href={`mailto:${contact_email}`} className="focus-ink rounded break-all underline-offset-4 hover:underline">{contact_email}</a>
               </p>
             )}
+            {store_phone && (
+              <p className="flex gap-2 text-white/65">
+                <Phone className="mt-0.5 size-4 shrink-0 text-frost" aria-hidden="true" />
+                <a href={`tel:${store_phone.replace(/[^\d+]/g, '')}`} className="tnum focus-ink rounded underline-offset-4 hover:underline">{store_phone}</a>
+              </p>
+            )}
+
+            {/* Jam Buka */}
             {hours.length > 0 ? (
               <ul className="space-y-1 text-white/65">
                 {hours.map((h) => (

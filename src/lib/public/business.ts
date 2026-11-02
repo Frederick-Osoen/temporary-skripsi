@@ -29,7 +29,7 @@ export const BUSINESS = {
 // Garansi: redaksi dan syarat disetujui lisan oleh owner (2026-10-27), tanpa persetujuan tertulis.
 export const GUARANTEE = {
   headline: 'AC tidak dingin? Tidak usah bayar.',
-  body: 'Kalau unit AC sewaan kami tidak mendinginkan sesuai yang dijanjikan saat acara, Anda tidak membayar sewa unit tersebut.',
+  body: 'Kalau unit AC sewaan kami tidak mendinginkan sesuai yang dijanjikan saat acara, Anda tidak perlu membayar sewa unit tersebut.',
   terms: 'Syarat dan ketentuan disampaikan admin saat konfirmasi pesanan.',
 } as const
 
