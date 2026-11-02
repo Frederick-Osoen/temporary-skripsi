@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       return (
         <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
           <h1 className="text-lg font-semibold">Akses ditolak</h1>
-          <p className="text-sm text-muted-foreground">Akun ini tidak terdaftar sebagai admin.</p>
+          <p className="text-sm text-muted-foreground">{admin.error}</p>
           <form action={signOut}>
             <button className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white">Keluar</button>
           </form>
