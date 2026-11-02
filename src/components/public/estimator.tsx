@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, Info, MessageCircle, Minus, Plus, Search, Trash2, Truck, Store, Zap } from 'lucide-react'
+import { Check, Info, MapPin, MessageCircle, Minus, Plus, Search, Trash2, Truck, Store, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { fleetPlanLabel } from '@/lib/public/fleet'
 import { MAX_QTY, useEstimator, type EstimatorProps } from '@/lib/public/use-estimator'
 import { cn } from '@/lib/utils'
 import { PlaceInput } from './place-input'
+import { RouteMap } from './route-map'
 
 const STEP_LABELS = ['Produk', 'Jadwal', 'Pengiriman', 'Kirim']
 
@@ -52,10 +53,16 @@ export function Estimator(props: EstimatorProps) {
     acCount, hasManualGenset, useGenset, setUseGenset, gensetActive, recKva, autoProduct, autoMissing, customKva,
     today, startDate, setStartDate, endDate, setEndDate, startTime, setStartTime, endTime, setEndTime, datesOk, timeError,
     delivery, setDeliveryChoice, destination, changeDestination, pickDestination, calculate, shipping, plan,
+    pin, confirmPin,
     hasRental, hasSales, hasGenset, result, issues, ready, draft, recordLead,
     name, setName, eventType, setEventType,
     sameHours, setSameHours, dayList, dayTimes, setDayTime,
   } = useEstimator(props)
+
+  // Peta: mode koreksi titik dibuka pelanggan; mode rute muncul otomatis setelah ongkir terhitung
+  const [picking, setPicking] = useState(false)
+  const routeReady = shipping.status === 'ok' && (!!shipping.polyline || !!shipping.point)
+  const showMap = picking || routeReady || (shipping.status === 'loading' && !!pin)
 
   // State khusus tampilan: pencarian di daftar produk (tidak menyentuh logika estimasi)
   const [search, setSearch] = useState('')
@@ -93,6 +100,13 @@ export function Estimator(props: EstimatorProps) {
     ready && !timeError,
   ]
 
+  // Layar sempit (< 420 px): label pendek supaya total harga di bar bawah tidak terpotong
+  const waLabel = (
+    <>
+      <span className="hidden min-[420px]:inline lg:inline">Lanjutkan via WhatsApp</span>
+      <span className="min-[420px]:hidden lg:hidden">Lanjut ke WA</span>
+    </>
+  )
   const waButton = (className: string) =>
     draft && !timeError ? (
       <a
@@ -102,11 +116,11 @@ export function Estimator(props: EstimatorProps) {
         onClick={recordLead}
         className={buttonVariants({ variant: 'accent', className })}
       >
-        <MessageCircle className="size-4" /> Lanjutkan via WhatsApp
+        <MessageCircle className="size-4" aria-hidden="true" /> {waLabel}
       </a>
     ) : (
       <Button type="button" variant="accent" className={className} disabled>
-        <MessageCircle className="size-4" /> Lanjutkan via WhatsApp
+        <MessageCircle className="size-4" aria-hidden="true" /> {waLabel}
       </Button>
     )
 
@@ -463,16 +477,53 @@ export function Estimator(props: EstimatorProps) {
                 <div className="space-y-2">
                   <Label htmlFor="destination">Alamat tujuan</Label>
                   <PlaceInput id="destination" value={destination} onChange={changeDestination} onPick={pickDestination} />
+                  {shipping.status === 'ok' && shipping.pinned && (
+                    <p className="flex items-center gap-1.5 text-xs text-success">
+                      <MapPin className="size-3.5 shrink-0" aria-hidden="true" /> Ongkir dihitung ke titik yang Anda pilih di peta.
+                    </p>
+                  )}
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10"
-                  disabled={shipping.status === 'loading' || destination.trim().length < 3}
-                  onClick={() => void calculate(destination)}
-                >
-                  {shipping.status === 'loading' ? 'Menghitung ongkir...' : 'Hitung ongkir'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10"
+                    disabled={shipping.status === 'loading' || destination.trim().length < 3}
+                    onClick={() => void calculate(destination, pin)}
+                  >
+                    {shipping.status === 'loading' ? 'Menghitung ongkir...' : 'Hitung ongkir'}
+                  </Button>
+                  {!showMap && (
+                    <Button type="button" variant="ghost" className="h-10" onClick={() => setPicking(true)}>
+                      <MapPin data-icon="inline-start" aria-hidden="true" /> Pilih titik di peta
+                    </Button>
+                  )}
+                </div>
+
+                {showMap && (
+                  <RouteMap
+                    mode={picking ? 'pick' : 'route'}
+                    polyline={shipping.status === 'ok' ? shipping.polyline : null}
+                    point={shipping.status === 'ok' ? shipping.point : pin}
+                    busy={shipping.status === 'loading'}
+                    onConfirm={(p, address) => {
+                      setPicking(false)
+                      confirmPin(p, address)
+                    }}
+                    onStartPick={() => setPicking(true)}
+                    onCancelPick={() => setPicking(false)}
+                  />
+                )}
+
+                {shipping.status === 'loading' && !showMap && (
+                  // Skeleton kartu hasil: hanya terlihat bila menunggu lebih dari 300 ms
+                  <div className="appear-late space-y-3 rounded-lg border bg-muted/40 p-3.5" role="status" aria-label="Menghitung ongkir">
+                    <div className="flex gap-8">
+                      <div className="space-y-1.5"><span className="skeleton block h-6 w-20" /><span className="skeleton block h-3 w-24" /></div>
+                      <div className="space-y-1.5"><span className="skeleton block h-6 w-28" /><span className="skeleton block h-3 w-24" /></div>
+                    </div>
+                  </div>
+                )}
 
                 {shipping.status === 'error' && (
                   <p role="alert" className="rounded-lg bg-volt/10 px-3.5 py-3 text-sm text-foreground">

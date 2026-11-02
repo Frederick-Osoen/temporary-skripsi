@@ -19,6 +19,7 @@ import { useCart } from '@/lib/public/cart'
 import { sendLead } from '@/lib/public/leads-client'
 import { EVENT_TYPE_LABEL, type EventType } from '@/lib/public/content-types'
 import { formatDate } from '@/lib/orders/utils'
+import { decodePolyline, formatCoord, mapsLink, type LatLng } from '@/lib/geo'
 
 export const MAX_QTY = 99
 export const MAX_DAYS = 60
@@ -29,12 +30,18 @@ type RouteResponse = {
     zone: 1 | 2 | 3
     toll_needs_review: boolean
     fleet_costs?: { pickup: { shipping_fee: number | null }; truck: { shipping_fee: number | null } }
+    polyline?: string | null
 }
 
 type ShippingState =
     | { status: 'idle' }
     | { status: 'loading' }
-    | { status: 'ok'; zone: 1 | 2 | 3; distance_km: number; perFleet: { pickup: number | null; truck: number | null }; reviewToll: boolean }
+    | {
+        status: 'ok'; zone: 1 | 2 | 3; distance_km: number; perFleet: { pickup: number | null; truck: number | null }; reviewToll: boolean
+        polyline: string | null // garis rute untuk peta
+        point: LatLng | null // titik yang dipakai menghitung (pin pelanggan, atau ujung rute untuk alamat ketikan)
+        pinned: boolean // true bila titik dipilih/dikoreksi pelanggan di peta
+      }
     | { status: 'unavailable' } // peta bermasalah: ongkir dikonfirmasi admin
     | { status: 'error'; message: string }
 
@@ -71,6 +78,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     const [deliveryChoice, setDeliveryChoice] = useState<'delivery' | 'store_pickup'>('delivery')
     const [destination, setDestination] = useState('')
     const [shipping, setShipping] = useState<ShippingState>({ status: 'idle' })
+    const [pin, setPin] = useState<LatLng | null>(null) // titik yang dipilih pelanggan di peta
     const [name, setName] = useState('')
     const routeSeq = useRef(0)
 
@@ -164,7 +172,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
             : (incompleteDays > 0 ? `Jam genset belum lengkap untuk ${incompleteDays} hari. Isi jam mulai dan selesai tiap hari.` : null)
 
     // ---------- ongkir ----------
-    async function calculate(text: string) {
+    async function calculate(text: string, pin: LatLng | null = null) {
         const dest = text.trim()
         if (dest.length < 3) return setShipping({ status: 'error', message: 'Alamat tujuan minimal 3 karakter.' })
         const seq = ++routeSeq.current
@@ -173,18 +181,34 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
             const res = await fetch('/api/distance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-source': 'public' },
-                body: JSON.stringify({ destination: dest, fleet_type: 'pickup' }),
+                body: JSON.stringify({
+                    destination: dest.slice(0, 200),
+                    fleet_type: 'pickup',
+                    with_polyline: true,
+                    ...(pin ? { location: { lat: pin.lat, lng: pin.lng } } : {}),
+                }),
             })
             const json = (await res.json().catch(() => null)) as (RouteResponse & { error?: string; retry_after?: number }) | null
             if (seq !== routeSeq.current) return
             if (res.ok && json?.fleet_costs) {
+                const polyline = json.polyline ?? null
                 return setShipping({
                     status: 'ok', zone: json.zone, distance_km: json.distance_km, reviewToll: json.toll_needs_review,
                     perFleet: { pickup: json.fleet_costs.pickup.shipping_fee, truck: json.fleet_costs.truck.shipping_fee },
+                    polyline,
+                    point: pin ?? (polyline ? decodePolyline(polyline).at(-1) ?? null : null),
+                    pinned: !!pin,
                 })
             }
             if (res.status === 429) return setShipping({ status: 'error', message: `Terlalu banyak permintaan. Coba lagi dalam ${json?.retry_after ?? 60} detik.` })
-            if (res.status === 404) return setShipping({ status: 'error', message: 'Alamat tidak ditemukan. Tulis lebih lengkap (kecamatan, kota).' })
+            if (res.status === 404) {
+                return setShipping({
+                    status: 'error',
+                    message: pin
+                        ? 'Rute ke titik ini tidak ditemukan. Geser pin ke jalan terdekat.'
+                        : 'Alamat tidak ditemukan. Tulis lebih lengkap (kecamatan, kota) atau pilih titik di peta.',
+                })
+            }
             if (res.status === 400) return setShipping({ status: 'error', message: json?.error ?? 'Alamat tidak valid.' })
             setShipping({ status: 'unavailable' })
         } catch {
@@ -194,6 +218,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
 
     function changeDestination(v: string) {
         setDestination(v)
+        setPin(null) // alamat diketik ulang: titik peta lama tidak berlaku
         if (shipping.status !== 'idle') {
             routeSeq.current++
             setShipping({ status: 'idle' })
@@ -201,7 +226,15 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
     }
     function pickDestination(text: string) {
         setDestination(text)
+        setPin(null)
         void calculate(text)
+    }
+    // Pelanggan memilih/mengoreksi titik di peta: alamat diisi dari titik, ongkir dihitung ke titik itu
+    function confirmPin(p: LatLng, address: string | null) {
+        const text = (address ?? `Titik peta (${formatCoord(p)})`).slice(0, 200)
+        setDestination(text)
+        setPin(p)
+        void calculate(text, p)
     }
 
     // ---------- hasil ----------
@@ -252,6 +285,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
             destination: destination.trim(),
             fleetLabel: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
             distanceKm: shipping.status === 'ok' ? shipping.distance_km : null,
+            pointUrl: shipping.status === 'ok' && shipping.point ? mapsLink(shipping.point) : undefined,
             input, result, notes, waNumber,
             eventLabel: eventType ? EVENT_TYPE_LABEL[eventType] : undefined,
             refCode: refCode || undefined,
@@ -274,6 +308,9 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
                 event_type: eventType || null,
                 delivery,
                 destination: delivery === 'delivery' ? destination.trim() : null,
+                destination_lat: delivery === 'delivery' && shipping.status === 'ok' && shipping.point ? shipping.point.lat : null,
+                destination_lng: delivery === 'delivery' && shipping.status === 'ok' && shipping.point ? shipping.point.lng : null,
+                destination_pinned: delivery === 'delivery' && shipping.status === 'ok' ? shipping.pinned : false,
                 fleet: delivery === 'delivery' ? fleetPlanLabel(plan) : null,
                 fleet_pickups: delivery === 'delivery' ? plan.pickups : 0,
                 fleet_trucks: delivery === 'delivery' ? plan.trucks : 0,
@@ -300,6 +337,7 @@ export function useEstimator({ products, rules, initialAdd, waNumber }: Estimato
         sameHours, setSameHours, dayList, dayTimes, setDayTime,
         // pengiriman
         delivery, setDeliveryChoice, destination, changeDestination, pickDestination, calculate, shipping, plan,
+        pin, confirmPin,
         // status pesanan & hasil
         hasRental, hasSales, hasGenset, result, issues, ready, draft, recordLead,
         // data pelanggan

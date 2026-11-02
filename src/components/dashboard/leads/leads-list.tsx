@@ -8,6 +8,7 @@ import { updateLeadSeriousness, updateLeadStatus } from '@/app/dashboard/leads/a
 import { safeAction } from '@/lib/action-client'
 import { formatDate, formatRupiah } from '@/lib/orders/utils'
 import type { LeadRow, LeadSeriousness, LeadStatus } from '@/lib/leads'
+import { mapsLink } from '@/lib/geo'
 
 export type Lead = LeadRow
 
@@ -139,6 +140,19 @@ export function LeadsList({ leads, searching = false }: { leads: Lead[]; searchi
                     Tujuan: {p.destination}
                     {p.distance_km ? ` (± ${p.distance_km} km)` : ''}
                     {p.fleet ? ` · ${p.fleet}` : ''}
+                    {typeof p.destination_lat === 'number' && typeof p.destination_lng === 'number' && (
+                      <>
+                        {' · '}
+                        <a
+                          href={mapsLink({ lat: p.destination_lat, lng: p.destination_lng })}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-primary underline-offset-2 hover:underline"
+                        >
+                          {p.destination_pinned ? 'Titik dari pelanggan' : 'Lihat di peta'}
+                        </a>
+                      </>
+                    )}
                   </p>
                 )}
                 {p?.notes?.map((n) => <p key={n}>Catatan: {n}</p>)}

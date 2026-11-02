@@ -7,6 +7,7 @@ export function buildWhatsAppDraft(args: {
   destination: string
   fleetLabel: string | null
   distanceKm: number | null
+  pointUrl?: string // tautan Google Maps ke titik tujuan
   input: EstimateInput
   result: EstimateResult
   notes?: string[]
@@ -14,7 +15,7 @@ export function buildWhatsAppDraft(args: {
   eventLabel?: string
   refCode?: string
 }): { text: string; url: string } {
-  const { name, destination, fleetLabel, distanceKm, input, result, notes = [], waNumber = WA_NUMBER, eventLabel, refCode } = args
+  const { name, destination, fleetLabel, distanceKm, pointUrl, input, result, notes = [], waNumber = WA_NUMBER, eventLabel, refCode } = args
   const L: string[] = []
 
   L.push(`Halo ${STORE_NAME}, saya ingin ${result.hasRental ? 'menyewa' : 'membeli'} berikut:`)
@@ -50,6 +51,7 @@ export function buildWhatsAppDraft(args: {
     L.push('*Pengambilan:* diambil di toko')
   } else {
     L.push(`*Lokasi tujuan:* ${destination}`)
+    if (pointUrl) L.push(`*Titik peta:* ${pointUrl}`)
     if (fleetLabel) L.push(`*Armada:* ${fleetLabel}${distanceKm !== null ? ` · jarak ± ${distanceKm} km` : ''}`)
   }
 

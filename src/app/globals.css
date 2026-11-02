@@ -159,6 +159,13 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    /* Terasa seperti aplikasi di HP: tanpa kilatan abu-abu saat tap, tanpa pembesaran teks di landscape */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Tap langsung direspons (tanpa jeda menunggu double-tap zoom) */
+  button, a, [role="button"], summary, label[for] {
+    touch-action: manipulation;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-heading);
@@ -172,6 +179,10 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
+}
+@keyframes appear-late {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes shimmer {
   from { background-position: 200% 0; }
@@ -198,10 +209,20 @@
   .card-lift {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
-  .card-lift:hover,
   .card-lift:focus-within {
     transform: translateY(-3px);
     box-shadow: var(--shadow-soft);
+  }
+  /* Hover hanya untuk mouse: di layar sentuh, efek hover "nyangkut" setelah diketuk */
+  @media (hover: hover) and (pointer: fine) {
+    .card-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+  }
+  /* Muncul hanya bila proses menunggu lebih dari 300 ms (skeleton tidak berkedip untuk respons cepat) */
+  .appear-late {
+    animation: appear-late 1ms linear 300ms both;
   }
   /* Skeleton loading (perceived latency) */
   .skeleton {
@@ -473,3 +494,17 @@
 }
 /* Ditahan PlayWhenVisible sampai terlihat */
 [data-play='wait'] * { animation-play-state: paused !important; }
+
+/* =====================================================================
+   SENTUHAN "NATIVE" DI HP (Emil Kowalski: mobile-native & design-eng)
+   ===================================================================== */
+/* iOS memperbesar halaman bila kolom input < 16px; perbaiki penyebabnya, jangan matikan zoom */
+@media (pointer: coarse) {
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+/* Umpan balik tekan di situs publik: tombol sedikit mengecil saat ditekan (100-160 ms, ease-out) */
+.theme-public [data-slot="button"]:not([aria-haspopup]):not(:disabled):active {
+  transform: scale(0.97);
+}

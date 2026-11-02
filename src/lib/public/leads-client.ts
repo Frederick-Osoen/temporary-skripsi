@@ -11,6 +11,9 @@ export type LeadPayload = {
     event_type?: string | null
     delivery: 'delivery' | 'store_pickup'
     destination: string | null
+    destination_lat?: number | null // titik yang dipakai menghitung ongkir
+    destination_lng?: number | null
+    destination_pinned?: boolean // true bila pelanggan memilih/mengoreksi titik di peta
     fleet: string | null
     fleet_pickups: number
     fleet_trucks: number

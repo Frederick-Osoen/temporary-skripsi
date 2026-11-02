@@ -2,6 +2,7 @@
 // Murni (tanpa akses database) agar mudah diuji.
 import { addDays } from '@/lib/orders/utils'
 import { eachDay } from '@/lib/orders/schedule'
+import { mapsLink } from '@/lib/geo'
 import { PICKUP_DESTINATION, type OrderFormValues, type OrderProduct } from '@/lib/validations/order'
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'dismissed'
@@ -16,6 +17,9 @@ export type LeadPayload = {
   event_type?: string | null
   delivery?: string
   destination?: string | null
+  destination_lat?: number | null
+  destination_lng?: number | null
+  destination_pinned?: boolean
   fleet?: string | null
   fleet_pickups?: number
   fleet_trucks?: number
@@ -117,6 +121,11 @@ export function leadToOrderValues(lead: LeadRow, products: OrderProduct[]): Lead
   }
   for (const n of p.notes ?? []) info.push(n)
   if (!storePickup) info.push('Ongkir belum terhitung: tekan "Hitung Ongkir" pada bagian Pengiriman.')
+  if (!storePickup && typeof p.destination_lat === 'number' && typeof p.destination_lng === 'number') {
+    info.push(
+      `${p.destination_pinned ? 'Pelanggan memilih titik di peta' : 'Titik tujuan dari estimasi'}: ${mapsLink({ lat: p.destination_lat, lng: p.destination_lng })} (hitung ongkir admin memakai teks alamat, hasilnya bisa sedikit berbeda).`
+    )
+  }
 
   const name = lead.customer_name === ANONYMOUS_LEAD_NAME ? '' : lead.customer_name
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getStoreSettings } from '@/lib/settings'
+import { ID_BOUNDS, coordKey, roundCoord, type LatLng } from '@/lib/geo'
 // import { Fuel } from 'lucide-react'
 
 export const runtime = 'nodejs'
@@ -53,12 +54,22 @@ const bodySchema = z.object({
   fleet_type: z
     .enum(['pickup', 'truck'], { error: 'fleet_type harus "pickup" atau "truck"' })
     .default('pickup'),
+  // Titik peta dari pelanggan (pinpoint). Bila ada, rute dihitung ke titik ini, bukan ke teks alamat.
+  location: z
+    .object({
+      lat: z.number().min(ID_BOUNDS.latMin, 'Titik peta di luar Indonesia').max(ID_BOUNDS.latMax, 'Titik peta di luar Indonesia'),
+      lng: z.number().min(ID_BOUNDS.lngMin, 'Titik peta di luar Indonesia').max(ID_BOUNDS.lngMax, 'Titik peta di luar Indonesia'),
+    }, { error: 'Titik peta tidak valid' })
+    .optional(),
+  // Estimator publik meminta garis rute untuk ditampilkan di peta. Dashboard tidak memintanya.
+  with_polyline: z.boolean().default(false),
 })
 
 type Money = { currencyCode?: string; units?: string; nanos?: number }
 type TollInfo = { estimatedPrice?: Money[] }
 type Route = {
   distanceMeters?: number
+  polyline?: { encodedPolyline?: string }
   travelAdvisory?: { tollInfo?: TollInfo }
   legs?: { travelAdvisory?: { tollInfo?: TollInfo } }[]
 }
@@ -85,7 +96,9 @@ function extractToll(route: Route) {
   )
 }
 
-async function callGoogle(destination: string, withPasses: boolean) {
+type Target = { address: string; location?: LatLng }
+
+async function callGoogle(target: Target, withPasses: boolean, withPolyline: boolean) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY
   const origin = process.env.WAREHOUSE_ADDRESS
   if (!apiKey || !origin) throw new Error('GOOGLE_MAPS_API_KEY / WAREHOUSE_ADDRESS belum diset')
@@ -106,11 +119,14 @@ async function callGoogle(destination: string, withPasses: boolean) {
         'routes.distanceMeters',
         'routes.travelAdvisory.tollInfo',
         'routes.legs.travelAdvisory.tollInfo',
+        ...(withPolyline ? ['routes.polyline.encodedPolyline'] : []),
       ].join(','),
     },
     body: JSON.stringify({
       origin: { address: origin },
-      destination: { address: destination },
+      destination: target.location
+        ? { location: { latLng: { latitude: target.location.lat, longitude: target.location.lng } } }
+        : { address: target.address },
       travelMode: 'DRIVE',
       routingPreference: 'TRAFFIC_AWARE',
       extraComputations: ['TOLLS'],
@@ -151,16 +167,17 @@ async function callGoogle(destination: string, withPasses: boolean) {
   return {
     distanceKm: Math.round((route.distanceMeters / 1000) * 100) / 100,
     tollOneWay: Math.round(extractToll(route)), // Gol I, satu arah
+    polyline: route.polyline?.encodedPolyline ?? null,
   }
 }
 
-async function fetchGoogleRoute(destination: string) {
+async function fetchGoogleRoute(target: Target, withPolyline: boolean) {
   let lastError: unknown
   let withPasses = true
 
   for (let attempt = 1; attempt <= GOOGLE_MAX_ATTEMPTS + 1; attempt++) {
     try {
-      return await callGoogle(destination, withPasses)
+      return await callGoogle(target, withPasses, withPolyline)
     } catch (err) {
       if (err instanceof RouteError && err.kind === 'bad_request' && withPasses) {
         // Kemungkinan nama tollPass salah: coba tanpa kartu tol agar jarak tetap dapat
@@ -240,7 +257,9 @@ function calculate(distanceKm: number, tollOneWayRaw: number, fleet: FleetType, 
   }
 }
 
-function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetType, cached: boolean, fl: FleetCfg) {
+function buildResponse(
+  distanceKm: number, tollOneWayRaw: number, fleet: FleetType, cached: boolean, fl: FleetCfg, polyline: string | null = null
+) {
   const r = calculate(distanceKm, tollOneWayRaw, fleet, fl)
   const cfg = fl[fleet]
 
@@ -276,8 +295,34 @@ function buildResponse(distanceKm: number, tollOneWayRaw: number, fleet: FleetTy
 
     requires_manual_price: r.zone === 3,
 
+    // Garis rute (encoded polyline) untuk peta estimator; null bila tidak diminta/tidak tersedia
+    polyline,
+
     cached,
   })
+}
+
+// Kolom polyline ada setelah fase-13.sql. Sebelum itu cache tetap jalan tanpa garis rute.
+let polylineColumnKnown: boolean | null = null
+type CacheRow = { distance_km: number; toll_fee: number; polyline: string | null }
+
+async function readCache(supabase: ReturnType<typeof createAdminClient>, key: string): Promise<{ row: CacheRow | null; polylineColumn: boolean }> {
+  if (polylineColumnKnown !== false) {
+    const { data, error } = await supabase.from('route_cache').select('distance_km, toll_fee, polyline').eq('destination_key', key).maybeSingle()
+    if (!error) {
+      polylineColumnKnown = true
+      return { row: data ? { distance_km: Number(data.distance_km), toll_fee: Number(data.toll_fee ?? 0), polyline: (data.polyline as string | null) ?? null } : null, polylineColumn: true }
+    }
+    if (error.code !== '42703') {
+      console.error('[distance] gagal baca cache:', error)
+      return { row: null, polylineColumn: true }
+    }
+    polylineColumnKnown = false
+    console.warn('[distance] kolom route_cache.polyline belum ada: jalankan fase-13.sql agar peta rute tersimpan di cache.')
+  }
+  const { data, error } = await supabase.from('route_cache').select('distance_km, toll_fee').eq('destination_key', key).maybeSingle()
+  if (error) console.error('[distance] gagal baca cache:', error)
+  return { row: data ? { distance_km: Number(data.distance_km), toll_fee: Number(data.toll_fee ?? 0), polyline: null } : null, polylineColumn: false }
 }
 
 const tooMany = (retryAfter: number) =>
@@ -300,7 +345,10 @@ async function handle(request: Request) {
       { status: 400 }
     )
   }
-  const { destination, fleet_type } = parsed.data
+  const { destination, fleet_type, location, with_polyline: withPolyline } = parsed.data
+  // Titik peta dibulatkan ~110 m: rute dihitung ke titik bulat ini supaya isi cache konsisten untuk semua pengguna
+  const point = location ? { lat: roundCoord(location.lat), lng: roundCoord(location.lng) } : undefined
+  const target: Target = { address: destination, location: point }
 
   try {
     const supabase = createAdminClient()
@@ -310,30 +358,38 @@ async function handle(request: Request) {
     if (wait > 0) return tooMany(wait)
 
     const fl = fleetWithRates(await getStoreSettings())
-    const key = normalizeKey(destination)
-    const { data: cached, error: cacheError } = await supabase
-      .from('route_cache')
-      .select('distance_km, toll_fee')
-      .eq('destination_key', key)
-      .maybeSingle()
+    const key = point ? coordKey(point) : normalizeKey(destination)
+    const { row: cached, polylineColumn } = await readCache(supabase, key)
 
-    if (cacheError) console.error('[distance] gagal baca cache:', cacheError)
-    else if (cached) {
-      return buildResponse(Number(cached.distance_km), Number(cached.toll_fee ?? 0), fleet_type, true, fl)
+    // Cache hit. Peta butuh garis rute: entri lama tanpa polyline dilengkapi sekali (lihat di bawah).
+    if (cached && (!withPolyline || cached.polyline || !polylineColumn)) {
+      return buildResponse(cached.distance_km, cached.toll_fee, fleet_type, true, fl, withPolyline ? cached.polyline : null)
     }
 
     const waitMiss = await checkRateLimit(supabase, 'distance-miss', ip, LIMIT_MISS.max, LIMIT_MISS.windowSec)
-    if (waitMiss > 0) return tooMany(waitMiss)
+    if (waitMiss > 0) {
+      // Jarak sudah ada di cache: tetap layani ongkirnya, hanya garis rutenya yang dilewati
+      if (cached) return buildResponse(cached.distance_km, cached.toll_fee, fleet_type, true, fl, null)
+      return tooMany(waitMiss)
+    }
 
-    const { distanceKm, tollOneWay } = await fetchGoogleRoute(destination)
+    let fresh: Awaited<ReturnType<typeof fetchGoogleRoute>>
+    try {
+      fresh = await fetchGoogleRoute(target, withPolyline)
+    } catch (err) {
+      // Gagal melengkapi polyline untuk entri yang sudah ada: ongkir tetap dari cache
+      if (cached) return buildResponse(cached.distance_km, cached.toll_fee, fleet_type, true, fl, null)
+      throw err
+    }
+    const { distanceKm, tollOneWay } = fresh
 
-    // Cache: jarak + tol satu arah Gol I (tidak tergantung armada)
-    const { error: upsertError } = await supabase
-      .from('route_cache')
-      .upsert({ destination_key: key, distance_km: distanceKm, toll_fee: tollOneWay }, { onConflict: 'destination_key' })
+    // Cache: jarak + tol satu arah Gol I (tidak tergantung armada) + garis rute bila diminta
+    const row: Record<string, unknown> = { destination_key: key, distance_km: distanceKm, toll_fee: tollOneWay }
+    if (polylineColumn && fresh.polyline) row.polyline = fresh.polyline
+    const { error: upsertError } = await supabase.from('route_cache').upsert(row, { onConflict: 'destination_key' })
     if (upsertError) console.error('[distance] gagal simpan cache:', upsertError)
 
-    return buildResponse(distanceKm, tollOneWay, fleet_type, false, fl)
+    return buildResponse(distanceKm, tollOneWay, fleet_type, false, fl, withPolyline ? fresh.polyline : null)
   } catch (err) {
     if (err instanceof RouteError && err.kind === 'not_found') {
       return NextResponse.json(

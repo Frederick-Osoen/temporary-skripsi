@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
     const { wa_number } = await getStoreSettings()
     return (
-        <div className={cn('theme-public flex min-h-screen flex-col antialiased', unbounded.variable, geologica.variable)}>
+        <div className={cn('theme-public flex min-h-svh flex-col antialiased', unbounded.variable, geologica.variable)}>
             <a
                 href="#konten"
                 className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-full focus:bg-volt focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-volt-foreground"
