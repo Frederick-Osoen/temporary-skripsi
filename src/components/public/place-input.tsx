@@ -87,7 +87,13 @@ export function PlaceInput({ id, value, onChange, onPick }: Props) {
               </li>
             ))}
           </ul>
-          {loading && items.length === 0 && <p className="px-3 py-2 text-xs text-muted-foreground">Mencari alamat...</p>}
+          {loading && items.length === 0 && (
+            // Skeleton baru muncul bila pencarian > 300 ms, supaya tidak berkedip saat respons cepat
+            <div className="appear-late space-y-2 px-3 py-2.5" role="status" aria-label="Mencari alamat">
+              <div className="skeleton h-3.5 w-11/12" />
+              <div className="skeleton h-3.5 w-3/4" />
+            </div>
+          )}
           {fallback && items.length === 0 && !loading && (
             <p className="px-3 py-2 text-xs text-muted-foreground">
               Saran alamat sedang tidak tersedia. Ketik alamat selengkap mungkin.

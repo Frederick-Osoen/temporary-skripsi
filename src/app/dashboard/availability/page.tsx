@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { buttonVariants } from '@/components/ui/button'
+import { AutoRefresh } from '@/components/dashboard/auto-refresh'
 import { addDays, todayWIB } from '@/lib/orders/utils'
 import { cn } from '@/lib/utils'
 
@@ -58,6 +59,7 @@ export default async function AvailabilityPage({ searchParams }: { searchParams:
 
   return (
     <div className="space-y-4">
+      <AutoRefresh seconds={30} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Ketersediaan Unit</h1>

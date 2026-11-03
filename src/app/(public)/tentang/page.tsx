@@ -7,6 +7,7 @@ import { getGallery } from '@/lib/public/content'
 import { TEAM, TEAM_PHOTO } from '@/lib/public/team'
 import { productImageUrl } from '@/lib/storage'
 import { PlayWhenVisible } from '@/components/public/play-when-visible'
+import { FadeIn } from '@/components/public/motion'
 
 export const revalidate = 60
 
@@ -123,15 +124,17 @@ export default async function AboutPage() {
           Empat hal yang kami pegang.
         </h2>
         <ul className="mt-12 grid gap-x-10 gap-y-12 sm:grid-cols-2">
-          {REASONS.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex gap-5">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-frost">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <div>
-                <h3 className="font-heading text-lg font-semibold">{title}</h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">{text}</p>
-              </div>
+          {REASONS.map(({ icon: Icon, title, text }, i) => (
+            <li key={title}>
+              <FadeIn delay={(i % 2) * 0.08} className="flex gap-5">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-frost">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold">{title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">{text}</p>
+                </div>
+              </FadeIn>
             </li>
           ))}
         </ul>
@@ -140,7 +143,7 @@ export default async function AboutPage() {
       {/* Tim: hanya tampil bila sudah ada foto asli (lihat src/lib/public/team.ts) */}
       {(TEAM.length > 0 || TEAM_PHOTO) && (
         <section aria-labelledby="tim" className="border-t">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+          <FadeIn className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
             <h2 id="tim" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
               Orang di balik JJ Teknik.
             </h2>
@@ -174,14 +177,14 @@ export default async function AboutPage() {
                 ))}
               </ul>
             )}
-          </div>
+          </FadeIn>
         </section>
       )}
 
       {/* Potongan galeri: diambil dari Galeri di dashboard, tersembunyi bila kosong */}
       {gallery.length > 0 && (
         <section aria-labelledby="lapangan" className="band-night grain">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+          <FadeIn className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
             <div className="flex flex-wrap items-end justify-between gap-5">
               <h2 id="lapangan" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">Sebagian pekerjaan kami.</h2>
               <Link href="/galeri" className="focus-ink rounded text-sm font-medium text-frost underline-offset-4 hover:underline">
@@ -207,12 +210,12 @@ export default async function AboutPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </FadeIn>
         </section>
       )}
 
       <section aria-labelledby="toko" className="border-t bg-muted/60">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:py-24 lg:grid-cols-12">
+        <FadeIn className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:py-24 lg:grid-cols-12">
           <figure className="lg:col-span-7">
             {/* TODO(owner): ganti dengan foto toko yang diambil sendiri (foto ini tampak berasal dari Google Maps). */}
             <Image
@@ -230,7 +233,7 @@ export default async function AboutPage() {
               Unit sewa berangkat dari sini. Sparepart bisa dibeli dan diambil langsung di toko.
             </p>
           </div>
-        </div>
+        </FadeIn>
       </section>
     </>
   )

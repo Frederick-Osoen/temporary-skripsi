@@ -3,6 +3,7 @@ import { Truck, Wrench, MapPin } from 'lucide-react'
 import { DayTimeline, type DayStep } from '@/components/public/day-timeline'
 import { FaqList } from '@/components/public/faq-list'
 import { GuaranteeStamp } from '@/components/public/guarantee-stamp'
+import { FadeIn } from '@/components/public/motion'
 import { JsonLd, faqLd, localBusinessLd } from '@/components/public/json-ld'
 import { NeedsCalculator } from '@/components/public/needs-calculator'
 import { ProductCard } from '@/components/public/product-card'
@@ -135,22 +136,24 @@ export default async function HomePage() {
 
       {/* ================= UNTUK SIAPA ================= */}
       <section aria-labelledby="untuk" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
-        <h2 id="untuk" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
-          Untuk acara yang tidak boleh gerah.
-        </h2>
+        <FadeIn>
+          <h2 id="untuk" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
+            Untuk acara yang tidak boleh gerah.
+          </h2>
+        </FadeIn>
         <div className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-0">
           {AUDIENCE.map((a, i) => (
-            <div key={a.title} className={i > 0 ? 'sm:border-l sm:pl-8' : 'sm:pr-8'}>
+            <FadeIn key={a.title} delay={i * 0.08} className={i > 0 ? 'sm:border-l sm:pl-8' : 'sm:pr-8'}>
               <h3 className="font-heading text-lg font-semibold">{a.title}</h3>
               <p className="mt-3 leading-relaxed text-muted-foreground">{a.text}</p>
-            </div>
+            </FadeIn>
           ))}
         </div>
       </section>
 
       {/* ================= JAM HARI-H ================= */}
       <section aria-labelledby="hari" className="band-night grain">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+        <FadeIn className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
           <h2 id="hari" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
             Satu acara, dari <span className="whitespace-nowrap">H-1</span> sampai bongkar.
           </h2>
@@ -158,12 +161,12 @@ export default async function HomePage() {
           <div className="mt-14">
             <DayTimeline steps={STEPS} />
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* ================= GARANSI ================= */}
       <section aria-labelledby="garansi" className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
-        <div className="grid items-center gap-10 lg:grid-cols-12">
+        <FadeIn className="grid items-center gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <GuaranteeStamp />
           </div>
@@ -174,14 +177,14 @@ export default async function HomePage() {
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">{GUARANTEE.body}</p>
             <p className="mt-4 text-sm text-muted-foreground">{GUARANTEE.terms}</p>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* ================= PRODUK ================= */}
       {showcase.length > 0 && (
         <section aria-labelledby="produk" className="border-y bg-muted/60">
           <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
-            <div className="flex flex-wrap items-end justify-between gap-5">
+            <FadeIn className="flex flex-wrap items-end justify-between gap-5">
               <h2 id="produk" className="max-w-xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
                 Yang paling sering kami antar.
               </h2>
@@ -191,10 +194,12 @@ export default async function HomePage() {
               >
                 Lihat seluruh katalog
               </Link>
-            </div>
+            </FadeIn>
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {showcase.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {showcase.map((p, i) => (
+                <FadeIn key={p.id} delay={(i % 3) * 0.07}>
+                  <ProductCard product={p} />
+                </FadeIn>
               ))}
             </div>
           </div>
@@ -208,7 +213,7 @@ export default async function HomePage() {
 
       {/* ================= KALKULATOR ================= */}
       <section aria-labelledby="hitung" className="band-night grain">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+        <FadeIn className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
           <h2 id="hitung" className="max-w-2xl font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
             Butuh berapa AC?
           </h2>
@@ -216,7 +221,7 @@ export default async function HomePage() {
           <div className="mt-12">
             <NeedsCalculator rules={rules} waNumber={settings.wa_number} />
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* ================= TESTIMONI & GALERI (tampil hanya bila sudah ada isinya) =================
@@ -226,7 +231,7 @@ export default async function HomePage() {
         <section aria-label="Bukti dari pelanggan" className="border-b bg-muted/60">
           <div className="mx-auto max-w-6xl divide-y px-4">
             {testimonials.length > 0 && (
-              <div className="py-16 sm:py-20">
+              <FadeIn className="py-16 sm:py-20">
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <h2 id="testi" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
                     Kata mereka.
@@ -238,10 +243,10 @@ export default async function HomePage() {
                 <div className="mt-10">
                   <TestimonialList items={testimonials.slice(0, 3)} />
                 </div>
-              </div>
+              </FadeIn>
             )}
             {gallery.length > 0 && (
-              <div className="py-16 sm:py-20">
+              <FadeIn className="py-16 sm:py-20">
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <h2 id="galeri" className="font-heading text-3xl font-semibold sm:text-[2.6rem]">
                     Dari lapangan.
@@ -253,7 +258,7 @@ export default async function HomePage() {
                 <div className="mt-10">
                   <GalleryGrid items={gallery.slice(0, 6)} />
                 </div>
-              </div>
+              </FadeIn>
             )}
           </div>
         </section>
@@ -261,7 +266,7 @@ export default async function HomePage() {
 
       {/* ================= FAQ ================= */}
       <section aria-labelledby="faq" className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
-        <div className="grid gap-10 lg:grid-cols-12">
+        <FadeIn className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <h2 id="faq" className="font-heading text-3xl font-semibold sm:text-[2.6rem] sm:leading-[1.08]">
               Yang sering ditanyakan.
@@ -270,7 +275,7 @@ export default async function HomePage() {
           <div className="lg:col-span-8">
             <FaqList items={FAQ} />
           </div>
-        </div>
+        </FadeIn>
       </section>
     </>
   )

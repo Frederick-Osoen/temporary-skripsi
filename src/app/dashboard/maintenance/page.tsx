@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AlertTriangle, CheckCircle2, Wrench } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
+import { AutoRefresh } from '@/components/dashboard/auto-refresh'
 import { buttonVariants } from '@/components/ui/button'
 import { MAINTENANCE_RULES } from '@/lib/maintenance'
 import { loadMaintenanceOverview, type MaintenanceUnit } from '@/lib/maintenance-overview'
@@ -47,6 +48,7 @@ export default async function MaintenancePage() {
 
   return (
     <div className="space-y-5">
+      <AutoRefresh seconds={30} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Maintenance</h1>
