@@ -54,7 +54,7 @@ function TodayStat({ n, label, href, delay }: { n: number; label: string; href: 
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className={cn('font-heading text-3xl font-bold leading-none sm:text-4xl', n === 0 ? 'text-white/35' : 'text-white')}>
-        <CountUp value={n} duration={600} />
+        <CountUp value={n} />
       </span>
       <span className="text-xs text-sidebar-foreground/75 group-hover:text-white">{label}</span>
     </Link>

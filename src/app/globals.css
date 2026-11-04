@@ -163,6 +163,10 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
+  /* Dashboard terpasang seperti aplikasi: tanpa tarik-untuk-refresh & pantulan seluruh halaman. */
+  html:has(.dash-root) {
+    overscroll-behavior: none;
+  }
   /* Tap langsung direspons (tanpa jeda menunggu double-tap zoom) */
   button, a, [role="button"], summary, label[for] {
     touch-action: manipulation;
@@ -248,11 +252,14 @@
 }
 
 /* Hormati pengguna yang mematikan animasi di perangkatnya */
+/* Reduced-motion = gerak lebih sedikit, bukan nol: perpindahan/skala dimatikan, tetapi fade warna & opacity
+   (yang membantu memahami perubahan) tetap singkat. Animasi berulang dihentikan. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 120ms !important;
+    transition-property: color, background-color, border-color, opacity !important;
     scroll-behavior: auto !important;
   }
 }
@@ -435,16 +442,16 @@
   to { transform: scaleY(1); }
 }
 @keyframes dash-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 @layer utilities {
   .dash-rise {
     transform-origin: bottom;
-    animation: dash-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: dash-rise 0.3s cubic-bezier(0.23, 1, 0.32, 1) both;
   }
   .dash-in {
-    animation: dash-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: dash-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
   }
 }
 
@@ -472,7 +479,7 @@
    denyut dingin terus menyebar dari pusat. Reduced-motion: langsung keadaan akhir.
    ===================================================================== */
 @keyframes reach-grow {
-  from { transform: scale(0); opacity: 0; }
+  from { transform: scale(0.85); opacity: 0; }
   50% { opacity: 1; }
   to { transform: scale(1); opacity: 1; }
 }
@@ -486,9 +493,9 @@
   100% { transform: scale(1); opacity: 0; }
 }
 @keyframes reach-dot {
-  0% { transform: scale(0); }
-  70% { transform: scale(1.35); }
-  100% { transform: scale(1); }
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 .reach :where(.reach-grow, .reach-spin, .reach-spin-rev, .reach-pulse, .reach-dot) {
   transform-box: fill-box;
@@ -514,6 +521,17 @@
   input, textarea, select {
     font-size: 16px;
   }
+}
+/* Efek tekan untuk elemen non-<Button> (link bergaya tombol, tab bawah). Tekan = langsung mengecil,
+   lepas = kembali lewat transisi elemen itu sendiri (sertakan `scale` di daftar transition-nya). */
+.press:not(:disabled):active {
+  scale: 0.97;
+}
+/* Kontrol (bukan konten) tidak boleh terpilih saat ditekan lama di HP. Teks biasa tetap bisa disalin. */
+button, [role="button"], summary, .press, nav a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 /* Umpan balik tekan di situs publik: tombol sedikit mengecil saat ditekan (100-160 ms, ease-out) */
 .theme-public [data-slot="button"]:not([aria-haspopup]):not(:disabled):active {

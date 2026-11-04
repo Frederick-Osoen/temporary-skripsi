@@ -50,7 +50,7 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 transition-[background-color,box-shadow,color] duration-300',
+        'sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,box-shadow,color] duration-200',
         night ? 'bg-ink text-white' : 'bg-background/85 text-foreground shadow-[0_1px_0_var(--border)] backdrop-blur-lg'
       )}
     >

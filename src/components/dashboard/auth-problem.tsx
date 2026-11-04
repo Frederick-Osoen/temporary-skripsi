@@ -9,7 +9,7 @@ export function AuthProblem({
 
   const title = code === 'FORBIDDEN' ? 'Akses ditolak' : 'Koneksi bermasalah'
   return (
-    <div className={`flex flex-col items-center justify-center gap-3 px-4 text-center ${fullScreen ? 'min-h-screen' : 'py-16'}`}>
+    <div className={`flex flex-col items-center justify-center gap-3 px-4 text-center ${fullScreen ? 'min-h-dvh' : 'py-16'}`}>
       <h1 className="text-lg font-semibold">{title}</h1>
       <p className="text-sm text-muted-foreground">{message}</p>
       {code === 'UNAVAILABLE' && (

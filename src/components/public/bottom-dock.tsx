@@ -55,7 +55,7 @@ export function BottomDock({ waNumber }: { waNumber: string }) {
   return (
     <div
       className={cn(
-        'pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] transition-[transform,opacity] duration-300 ease-out',
+        'pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] transition-[transform,opacity] duration-250 ease-out',
         atFooter && 'translate-y-[calc(100%+1rem)] opacity-0'
       )}
       aria-hidden={atFooter || undefined}
@@ -83,14 +83,14 @@ export function BottomDock({ waNumber }: { waNumber: string }) {
           aria-label="Chat admin JJ Teknik via WhatsApp"
           title="Chat admin via WhatsApp"
           className={cn(
-            'focus-ink group pointer-events-auto flex h-14 shrink-0 items-center rounded-full bg-wa text-sm font-semibold text-white shadow-float transition-[padding,transform] duration-300 hover:-translate-y-0.5',
+            'focus-ink press group pointer-events-auto flex h-14 shrink-0 items-center rounded-full bg-wa text-sm font-semibold text-white shadow-float transition-[padding,transform,translate,scale] duration-200 ease-out hover:-translate-y-0.5',
             compact ? 'px-[1.125rem]' : 'gap-2 px-4'
           )}
         >
           <MessageCircle className="size-5" aria-hidden="true" />
           <span
             className={cn(
-              'hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 sm:inline-block',
+              'hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 sm:inline-block',
               compact ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
             )}
           >

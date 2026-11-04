@@ -30,6 +30,10 @@ export const viewport: Viewport = {
   themeColor: '#0b1b33',
   width: 'device-width',
   initialScale: 1,
+  // Isi layar penuh sampai ke area notch; tanpa ini env(safe-area-inset-*) selalu 0.
+  viewportFit: 'cover',
+  // Keyboard HP mengecilkan layout, jadi bar di bawah ikut naik.
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

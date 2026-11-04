@@ -50,7 +50,7 @@ export function PaymentsSection({
       {status !== 'cancelled' && (
         <div className="space-y-1">
           <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${s.percent}%` }} />
+            <div className="h-full origin-left rounded-full bg-primary transition-transform duration-300 ease-out" style={{ transform: `scaleX(${Math.min(100, Math.max(0, s.percent)) / 100})` }} />
           </div>
           <p className="text-xs text-muted-foreground">{s.paidOff ? 'Lunas' : `${s.percent}% terbayar`}</p>
         </div>

@@ -52,7 +52,7 @@ export function GalleryGrid({ items, filterable = false }: { items: GalleryItem[
                 width={800}
                 height={600}
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.03]"
+                className="h-auto w-full transition-transform duration-300 ease-out group-hover:scale-[1.03]"
               />
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-4 pt-12 text-sm text-white">
                 <span className="block font-medium">{g.caption}</span>

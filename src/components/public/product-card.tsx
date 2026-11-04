@@ -27,7 +27,7 @@ export function ProductCard({ product: p }: { product: PublicProduct }) {
   const imageUrl = productImageUrl(p.image_path)
 
   return (
-    <article className="group panel flex flex-col overflow-hidden rounded-2xl transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-float focus-within:-translate-y-1">
+    <article className="group panel flex flex-col overflow-hidden rounded-2xl transition-[transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-float focus-within:-translate-y-1">
       <div className="relative aspect-[4/3] overflow-hidden bg-ink">
         {imageUrl ? (
           <Image
@@ -35,7 +35,7 @@ export function ProductCard({ product: p }: { product: PublicProduct }) {
             alt={p.name}
             fill
             sizes="(min-width: 1024px) 24rem, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+            className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.05]"
           />
         ) : (
           <div className="band-night art-static flex h-full items-center justify-center p-10 text-frost/75">
@@ -99,7 +99,7 @@ export function ProductCard({ product: p }: { product: PublicProduct }) {
               <button
                 type="button"
                 onClick={() => add(p.id)}
-                className="focus-ink flex h-11 w-full items-center justify-center gap-2 rounded-full border border-input text-sm font-medium transition-colors hover:border-ink hover:bg-ink hover:text-white"
+                className="focus-ink flex h-11 w-full items-center justify-center gap-2 press rounded-full border border-input text-sm font-medium transition-[color,background-color,border-color,scale] duration-150 ease-out hover:border-ink hover:bg-ink hover:text-white"
               >
                 <Plus className="size-4" aria-hidden="true" /> Tambah ke keranjang
               </button>

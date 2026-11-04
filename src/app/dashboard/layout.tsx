@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { getCurrentAdmin } from '@/lib/auth'
 import { signOut } from '@/app/auth/actions'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
@@ -7,13 +7,16 @@ import { AuthProblem } from '@/components/dashboard/auth-problem'
 // Area admin tidak boleh diindeks mesin pencari
 export const metadata: Metadata = { title: { default: 'Dashboard', template: '%s | Dashboard JJ Teknik' }, robots: { index: false, follow: false } }
 
+// Header dashboard terang, jadi bar status/browser di HP ikut terang (situs publik tetap navy).
+export const viewport: Viewport = { themeColor: '#ffffff' }
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const admin = await getCurrentAdmin()
 
   if (!admin.ok) {
     if (admin.code === 'FORBIDDEN') {
       return (
-        <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+        <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
           <h1 className="text-lg font-semibold">Akses ditolak</h1>
           <p className="text-sm text-muted-foreground">{admin.error}</p>
           <form action={signOut}>

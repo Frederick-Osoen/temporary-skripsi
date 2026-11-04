@@ -122,7 +122,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
   }, [])
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-muted/40">
+    <div className="dash-root min-h-dvh overflow-x-clip bg-muted/40">
       {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex h-16 shrink-0 items-center px-5 text-white">
@@ -151,7 +151,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
       </Sheet>
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
           <div className="flex h-14 items-center gap-2 px-4 md:h-16 md:gap-3 md:px-6">
             <div className="md:hidden">
               <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="JJ Teknik, ke Ringkasan">
@@ -170,7 +170,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
               onClick={() => setSearchOpen((v) => !v)}
               aria-expanded={searchOpen}
               aria-label={searchOpen ? 'Tutup pencarian' : 'Cari pesanan'}
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted md:hidden"
+              className="press flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-[background-color,scale] duration-150 ease-out hover:bg-muted md:hidden"
             >
               {searchOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Search className="h-5 w-5" aria-hidden="true" />}
             </button>
@@ -178,7 +178,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
             <Link
               href="/dashboard/orders/new"
               aria-label="Pesanan baru"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground sm:hidden"
+              className="press flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-[scale] duration-150 ease-out sm:hidden"
             >
               <Plus className="h-5 w-5" aria-hidden="true" />
             </Link>
@@ -211,7 +211,7 @@ export function DashboardShell({ name, role, newLeads, signOutAction, children }
                   href={href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium',
+                    'press relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-[color,scale] duration-150 ease-out',
                     active ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >

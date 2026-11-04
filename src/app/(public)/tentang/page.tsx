@@ -201,7 +201,7 @@ export default async function AboutPage() {
                       width={900}
                       height={900}
                       sizes={mosaic && i === 0 ? '(min-width: 1024px) 36rem, 100vw' : '(min-width: 1024px) 18rem, 50vw'}
-                      className="aspect-square h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      className="aspect-square h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                     />
                     <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent px-3 pt-8 pb-3 text-xs text-white">
                       {g.caption}

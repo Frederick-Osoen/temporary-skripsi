@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <main
       className={cn(
-        'theme-public band-night grain flex min-h-screen flex-col items-center justify-center px-4 text-center',
+        'theme-public band-night grain flex min-h-svh flex-col items-center justify-center px-4 text-center',
         unbounded.variable,
         geologica.variable
       )}
