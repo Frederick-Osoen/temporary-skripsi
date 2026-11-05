@@ -37,12 +37,34 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
+  // Warna header bergantung pada posisi gulir. Dibaca ulang di beberapa momen (bukan hanya saat event scroll),
+  // karena browser bisa memulihkan/menggeser posisi gulir tanpa event yang tepat saat halaman baru dibuka;
+  // akibatnya header bisa "terjebak" putih di atas hero gelap sampai pengguna menggulir sekali.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    let raf = 0
+    const read = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => setScrolled(window.scrollY > 24))
+    }
+    read()
+    const timers = [100, 400, 1200].map((ms) => window.setTimeout(read, ms))
+    window.addEventListener('scroll', read, { passive: true })
+    window.addEventListener('scrollend', read)
+    window.addEventListener('load', read)
+    window.addEventListener('pageshow', read)
+    window.addEventListener('resize', read)
+    document.addEventListener('visibilitychange', read)
+    return () => {
+      cancelAnimationFrame(raf)
+      timers.forEach(clearTimeout)
+      window.removeEventListener('scroll', read)
+      window.removeEventListener('scrollend', read)
+      window.removeEventListener('load', read)
+      window.removeEventListener('pageshow', read)
+      window.removeEventListener('resize', read)
+      document.removeEventListener('visibilitychange', read)
+    }
+  }, [pathname])
 
   const night = NIGHT_ROUTES.includes(pathname) && !scrolled
   const showCart = ready && count > 0 && !pathname.startsWith('/estimasi')
