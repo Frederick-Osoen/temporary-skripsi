@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ArrowRight, Menu, MessageCircle, ShoppingBasket } from 'lucide-react'
@@ -29,6 +29,8 @@ const DRAWER_LINKS = [{ href: '/', label: 'Beranda' }, ...NAV.filter((n) => n.hr
 // Tambahkan rute di sini bila seksi pertama halaman baru memakai `band-night`.
 const NIGHT_ROUTES = ['/', '/tentang', '/kalkulator']
 
+const subscribeNoop = () => () => {}
+
 const isActive = (pathname: string, href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
 export function SiteHeader({ waNumber }: { waNumber: string }) {
@@ -36,6 +38,10 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
   const { count, ready } = useCart()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  // Setelah hydration, header dibuat ulang sekali dari state klien. React tidak memperbaiki atribut class yang
+  // berbeda antara HTML server dan render klien; bila HTML dari server membawa warna yang salah (mis. putih di atas
+  // hero gelap), warna itu menempel sampai ada perubahan state. Dengan key berbeda, DOM header diganti oleh versi klien.
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false)
 
   // Warna header bergantung pada posisi gulir. Dibaca ulang di beberapa momen (bukan hanya saat event scroll),
   // karena browser bisa memulihkan/menggeser posisi gulir tanpa event yang tepat saat halaman baru dibuka;
@@ -71,6 +77,7 @@ export function SiteHeader({ waNumber }: { waNumber: string }) {
 
   return (
     <header
+      key={hydrated ? 'klien' : 'server'}
       className={cn(
         'sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,box-shadow,color] duration-200',
         night ? 'bg-ink text-white' : 'bg-background/85 text-foreground shadow-[0_1px_0_var(--border)] backdrop-blur-lg'
